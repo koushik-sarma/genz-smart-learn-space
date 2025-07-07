@@ -2,9 +2,14 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { Edit } from 'lucide-react';
 
 interface Subject {
   subject_id: number;
@@ -25,6 +30,15 @@ export default function Dashboard() {
   const [userProgress, setUserProgress] = useState<UserProgress[]>([]);
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [editFormData, setEditFormData] = useState({
+    firstName: '',
+    lastName: '',
+    boardOfEducation: '',
+    class: '',
+    city: '',
+    state: ''
+  });
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -99,6 +113,55 @@ export default function Dashboard() {
     }
   };
 
+  const handleEditProfile = () => {
+    if (profile) {
+      setEditFormData({
+        firstName: profile.first_name || '',
+        lastName: profile.last_name || '',
+        boardOfEducation: profile.board_of_education || '',
+        class: profile.class || '',
+        city: profile.city || '',
+        state: profile.state || ''
+      });
+      setIsEditDialogOpen(true);
+    }
+  };
+
+  const handleUpdateProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          first_name: editFormData.firstName,
+          last_name: editFormData.lastName,
+          board_of_education: editFormData.boardOfEducation,
+          class: editFormData.class,
+          city: editFormData.city,
+          state: editFormData.state
+        })
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Profile updated successfully!",
+        description: "Your changes have been saved."
+      });
+
+      setIsEditDialogOpen(false);
+      fetchDashboardData(); // Refresh the data
+    } catch (error: any) {
+      toast({
+        title: "Error updating profile",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
@@ -118,9 +181,130 @@ export default function Dashboard() {
             <h1 className="text-3xl font-bold">Welcome back, {profile?.first_name}!</h1>
             <p className="text-gray-300 mt-2">Class {profile?.class} • {profile?.board_of_education}</p>
           </div>
-          <Button onClick={handleSignOut} variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
-            Sign Out
-          </Button>
+          <div className="flex gap-2">
+            <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+              <DialogTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                  onClick={handleEditProfile}
+                >
+                  <Edit className="w-4 h-4 mr-2" />
+                  Edit Profile
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="bg-white/10 backdrop-blur-xl border-white/20 text-white">
+                <DialogHeader>
+                  <DialogTitle className="text-white">Edit Profile</DialogTitle>
+                </DialogHeader>
+                
+                <form onSubmit={handleUpdateProfile} className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="firstName" className="text-white">First Name</Label>
+                      <Input
+                        id="firstName"
+                        type="text"
+                        value={editFormData.firstName}
+                        onChange={(e) => setEditFormData({ ...editFormData, firstName: e.target.value })}
+                        required
+                        className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="lastName" className="text-white">Last Name</Label>
+                      <Input
+                        id="lastName"
+                        type="text"
+                        value={editFormData.lastName}
+                        onChange={(e) => setEditFormData({ ...editFormData, lastName: e.target.value })}
+                        required
+                        className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="board" className="text-white">Board of Education</Label>
+                    <Select value={editFormData.boardOfEducation} onValueChange={(value) => setEditFormData({ ...editFormData, boardOfEducation: value })}>
+                      <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                        <SelectValue placeholder="Select board" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white border-gray-200 text-gray-900">
+                        <SelectItem value="Telangana State Board">Telangana State Board</SelectItem>
+                        <SelectItem value="CBSE">CBSE</SelectItem>
+                        <SelectItem value="ICSE">ICSE</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="class" className="text-white">Class</Label>
+                    <Select value={editFormData.class} onValueChange={(value) => setEditFormData({ ...editFormData, class: value })}>
+                      <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                        <SelectValue placeholder="Select class" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white border-gray-200 text-gray-900">
+                        <SelectItem value="6th">6th</SelectItem>
+                        <SelectItem value="7th">7th</SelectItem>
+                        <SelectItem value="8th">8th</SelectItem>
+                        <SelectItem value="9th">9th</SelectItem>
+                        <SelectItem value="10th">10th</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="city" className="text-white">City</Label>
+                      <Input
+                        id="city"
+                        type="text"
+                        value={editFormData.city}
+                        onChange={(e) => setEditFormData({ ...editFormData, city: e.target.value })}
+                        required
+                        className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="state" className="text-white">State</Label>
+                      <Input
+                        id="state"
+                        type="text"
+                        value={editFormData.state}
+                        onChange={(e) => setEditFormData({ ...editFormData, state: e.target.value })}
+                        required
+                        className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2 pt-4">
+                    <Button 
+                      type="submit" 
+                      className="bg-gradient-primary hover:shadow-glow transition-all duration-300"
+                    >
+                      Save Changes
+                    </Button>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => setIsEditDialogOpen(false)}
+                      className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
+
+            <Button onClick={handleSignOut} variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
+              Sign Out
+            </Button>
+          </div>
         </div>
 
         {/* Overall Progress */}
