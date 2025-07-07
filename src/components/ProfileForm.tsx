@@ -119,7 +119,7 @@ export function ProfileForm({ user, onComplete }: ProfileFormProps) {
                 <SelectTrigger className="bg-white/10 border-white/20 text-white">
                   <SelectValue placeholder="Select board" />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-800 border-white/20">
+                <SelectContent className="bg-white border-gray-200 text-gray-900">
                   <SelectItem value="Telangana State Syllabus">Telangana State Syllabus</SelectItem>
                   <SelectItem value="CBSE">CBSE</SelectItem>
                   <SelectItem value="ICSE">ICSE</SelectItem>
@@ -133,7 +133,7 @@ export function ProfileForm({ user, onComplete }: ProfileFormProps) {
                 <SelectTrigger className="bg-white/10 border-white/20 text-white">
                   <SelectValue placeholder="Select class" />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-800 border-white/20">
+                <SelectContent className="bg-white border-gray-200 text-gray-900">
                   <SelectItem value="6th">6th</SelectItem>
                   <SelectItem value="7th">7th</SelectItem>
                   <SelectItem value="8th">8th</SelectItem>
