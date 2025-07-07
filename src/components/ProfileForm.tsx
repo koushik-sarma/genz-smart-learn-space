@@ -64,7 +64,8 @@ export function ProfileForm({ user, onComplete }: ProfileFormProps) {
         description: "Welcome to Edgenius!"
       });
 
-      onComplete();
+      // Navigate to dashboard
+      window.location.href = '/dashboard';
     } catch (error: any) {
       toast({
         title: "Error creating profile",

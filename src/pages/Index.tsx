@@ -32,8 +32,9 @@ const Index = () => {
       }
 
       if (data) {
-        setHasProfile(true);
-        setShowProfileForm(false);
+        // User has profile, redirect to dashboard
+        window.location.href = '/dashboard';
+        return;
       } else {
         setShowProfileForm(true);
       }

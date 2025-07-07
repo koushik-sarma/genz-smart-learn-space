@@ -14,6 +14,174 @@ export type Database = {
   }
   public: {
     Tables: {
+      dim_boards: {
+        Row: {
+          board_id: number
+          board_name: string
+          state_name: string | null
+        }
+        Insert: {
+          board_id?: number
+          board_name: string
+          state_name?: string | null
+        }
+        Update: {
+          board_id?: number
+          board_name?: string
+          state_name?: string | null
+        }
+        Relationships: []
+      }
+      dim_chemistry_subject: {
+        Row: {
+          board_id: number
+          chapter: string
+          chapter_description: string
+          chemistry_chapter_id: number
+          class: number
+          part: string | null
+          subject_id: number
+        }
+        Insert: {
+          board_id: number
+          chapter: string
+          chapter_description: string
+          chemistry_chapter_id?: number
+          class: number
+          part?: string | null
+          subject_id: number
+        }
+        Update: {
+          board_id?: number
+          chapter?: string
+          chapter_description?: string
+          chemistry_chapter_id?: number
+          class?: number
+          part?: string | null
+          subject_id?: number
+        }
+        Relationships: []
+      }
+      dim_mathematics_subject: {
+        Row: {
+          board_id: number
+          chapter: string
+          chapter_description: string
+          class: number
+          math_chapter_id: number
+          part: string | null
+          subject_id: number
+        }
+        Insert: {
+          board_id: number
+          chapter: string
+          chapter_description: string
+          class: number
+          math_chapter_id?: number
+          part?: string | null
+          subject_id: number
+        }
+        Update: {
+          board_id?: number
+          chapter?: string
+          chapter_description?: string
+          class?: number
+          math_chapter_id?: number
+          part?: string | null
+          subject_id?: number
+        }
+        Relationships: []
+      }
+      dim_physics_subject: {
+        Row: {
+          board_id: number
+          chapter: string
+          chapter_description: string
+          class: number
+          part: string | null
+          physic_chapter_id: number
+          subject_id: number
+        }
+        Insert: {
+          board_id: number
+          chapter: string
+          chapter_description: string
+          class: number
+          part?: string | null
+          physic_chapter_id?: number
+          subject_id: number
+        }
+        Update: {
+          board_id?: number
+          chapter?: string
+          chapter_description?: string
+          class?: number
+          part?: string | null
+          physic_chapter_id?: number
+          subject_id?: number
+        }
+        Relationships: []
+      }
+      dim_social_subject: {
+        Row: {
+          board_id: number
+          chapter: string
+          chapter_description: string
+          class: number
+          part: string | null
+          social_chapter_id: number
+          subject_id: number
+        }
+        Insert: {
+          board_id: number
+          chapter: string
+          chapter_description: string
+          class: number
+          part?: string | null
+          social_chapter_id?: number
+          subject_id: number
+        }
+        Update: {
+          board_id?: number
+          chapter?: string
+          chapter_description?: string
+          class?: number
+          part?: string | null
+          social_chapter_id?: number
+          subject_id?: number
+        }
+        Relationships: []
+      }
+      dim_subjects: {
+        Row: {
+          board_id: number
+          board_name: string
+          class: number
+          part: string | null
+          subject_id: number
+          subject_name: string
+          total_chapters: number
+        }
+        Insert: {
+          board_id: number
+          board_name: string
+          class: number
+          part?: string | null
+          subject_id?: number
+          subject_name: string
+          total_chapters: number
+        }
+        Update: {
+          board_id?: number
+          board_name?: string
+          class?: number
+          part?: string | null
+          subject_id?: number
+          subject_name?: string
+          total_chapters?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           board_of_education: string | null
@@ -48,6 +216,33 @@ export type Database = {
           id?: string
           last_name?: string | null
           state?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_progress: {
+        Row: {
+          completed_chapters: number
+          created_at: string
+          id: string
+          subject_id: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_chapters?: number
+          created_at?: string
+          id?: string
+          subject_id: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_chapters?: number
+          created_at?: string
+          id?: string
+          subject_id?: number
           updated_at?: string
           user_id?: string
         }
