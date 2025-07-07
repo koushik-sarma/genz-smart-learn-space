@@ -64,8 +64,7 @@ export function ProfileForm({ user, onComplete }: ProfileFormProps) {
         description: "Welcome to Edgenius!"
       });
 
-      // Navigate to dashboard
-      window.location.href = '/dashboard';
+      onComplete();
     } catch (error: any) {
       toast({
         title: "Error creating profile",
@@ -121,7 +120,7 @@ export function ProfileForm({ user, onComplete }: ProfileFormProps) {
                   <SelectValue placeholder="Select board" />
                 </SelectTrigger>
                 <SelectContent className="bg-white border-gray-200 text-gray-900">
-                  <SelectItem value="Telangana State Syllabus">Telangana State Syllabus</SelectItem>
+                  <SelectItem value="Telangana State Board">Telangana State Board</SelectItem>
                   <SelectItem value="CBSE">CBSE</SelectItem>
                   <SelectItem value="ICSE">ICSE</SelectItem>
                 </SelectContent>
