@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive Mirror Lab v3</title>
+    <title>Interactive Mirror Lab v4</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -14,7 +14,7 @@
             background-color: #f0f2f5;
             color: #333;
             flex-wrap: wrap;
-            margin: 0; /* Important for embedding */
+            margin: 0;
         }
         .container {
             display: flex;
@@ -53,7 +53,7 @@
         .control-group input[type="range"] {
             width: 100%;
         }
-        .mirror-type label {
+        .mirror-type label, .invert-object label {
             display: inline-block;
             margin-right: 10px;
         }
@@ -87,6 +87,22 @@
             border-radius: 4px;
             background-color: #eaf6ec;
         }
+        .formula-corner {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ffc107;
+            border-radius: 4px;
+            background-color: #fff8e1;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .formula-corner h4 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-family: sans-serif;
+            font-weight: 600;
+        }
         h1, p.instructions {
             text-align: center;
             width: 100%;
@@ -97,7 +113,7 @@
 
 <div class="container">
     <h1>Interactive Mirror Lab: Reflection at Curved Surfaces</h1>
-    <p class="instructions">Click and drag the <strong>blue object arrow</strong>. Use the controls to change mirror properties.</p>
+    <p class="instructions">Click and drag the <strong>blue object arrow</strong>. Use the controls to change mirror properties. You can also invert the object.</p>
     
     <div class="simulation-wrapper">
         <div class="controls">
@@ -116,6 +132,10 @@
             <div class="control-group">
                 <label for="objectHeight">Object Height (hₒ): <span id="objectHeightValue"></span> cm</label>
                 <input type="range" id="objectHeight" min="1" max="25" value="10">
+            </div>
+            <div class="control-group invert-object">
+                <input type="checkbox" id="invertObject">
+                <label for="invertObject">Invert Object</label>
             </div>
         </div>
 
@@ -136,6 +156,15 @@
                 <strong>Nature of Image:</strong>
                 <div id="nature"></div>
             </div>
+
+            <div class="formula-corner">
+                <h4>Formula Corner</h4>
+                <div><strong>Mirror Formula:</strong></div>
+                <div id="mirrorFormula">1/f = 1/u + 1/v</div>
+                <br>
+                <div><strong>Magnification:</strong></div>
+                <div id="magnificationFormula">m = -v/u = hᵢ/hₒ</div>
+            </div>
         </div>
     </div>
 </div>
@@ -150,12 +179,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const objectHeightSlider = document.getElementById('objectHeight');
     const concaveRadio = document.getElementById('concave');
     const convexRadio = document.getElementById('convex');
+    const invertObjectCheckbox = document.getElementById('invertObject');
 
     // Value Displays
     const focalLengthValueSpan = document.getElementById('focalLengthValue');
     const objectHeightValueSpan = document.getElementById('objectHeightValue');
     
-    // Results
+    // Results & Formulas
     const resultF = document.getElementById('result_f');
     const resultR = document.getElementById('result_R');
     const resultU = document.getElementById('result_u');
@@ -164,6 +194,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const resultHi = document.getElementById('result_hi');
     const resultM = document.getElementById('result_m');
     const natureDiv = document.getElementById('nature');
+    const mirrorFormulaDiv = document.getElementById('mirrorFormula');
+    const magnificationFormulaDiv = document.getElementById('magnificationFormula');
 
     // Simulation Constants
     const scale = 5; 
@@ -177,6 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
         mirrorType: 'concave',
         focalLength: 30,
         objectHeight: 10,
+        isObjectInverted: false,
         objectX: poleX - 70 * scale,
         isDragging: false
     };
@@ -185,9 +218,11 @@ document.addEventListener('DOMContentLoaded', () => {
         state.mirrorType = concaveRadio.checked ? 'concave' : 'convex';
         state.focalLength = parseInt(focalLengthSlider.value);
         state.objectHeight = parseInt(objectHeightSlider.value);
+        state.isObjectInverted = invertObjectCheckbox.checked;
     }
     
     function drawArrow(x, y, height, color, isDashed = false) {
+        // height is now signed (+ for erect, - for inverted)
         ctx.beginPath();
         ctx.strokeStyle = color;
         ctx.lineWidth = 3;
@@ -197,10 +232,12 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.moveTo(x, y);
         ctx.lineTo(x, y - height);
         ctx.stroke();
+        // Arrowhead
+        const arrowDir = height > 0 ? 1 : -1;
         ctx.moveTo(x, y - height);
-        ctx.lineTo(x - 6, y - height + 12);
+        ctx.lineTo(x - 6, y - height + 12 * arrowDir);
         ctx.moveTo(x, y - height);
-        ctx.lineTo(x + 6, y - height + 12);
+        ctx.lineTo(x + 6, y - height + 12 * arrowDir);
         ctx.stroke();
         ctx.setLineDash([]);
         ctx.lineWidth = 1;
@@ -247,12 +284,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 endX = startX - hatchLength * dirX;
                 endY = startY - hatchLength * dirY;
             }
+            
             ctx.moveTo(startX, startY);
             ctx.lineTo(endX, endY);
         }
         ctx.stroke();
     }
-
 
     function drawAxisAndLabels() {
         ctx.beginPath();
@@ -268,7 +305,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function drawFAndC(f, R) {
         const fX = poleX - f * scale;
         const cX = poleX - R * scale;
-        
         ctx.fillStyle = '#000';
         ctx.font = "bold 14px Arial";
         ctx.fillText('F', fX - 5, axisY + 20);
@@ -298,7 +334,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const f_cm = state.mirrorType === 'concave' ? state.focalLength : -state.focalLength;
         const R_cm = 2 * f_cm;
-        const ho_cm = state.objectHeight;
+        const ho_cm = state.isObjectInverted ? -state.objectHeight : state.objectHeight;
         const ho_px = ho_cm * scale;
         const u_cm = (poleX - state.objectX) / scale;
 
@@ -311,11 +347,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (Math.abs(u_cm - f_cm) < 0.1) {
             v_cm = Infinity; hi_cm = Infinity; m = Infinity;
         } else {
-            v_cm = 1 / (1/f_cm - 1/u_cm); m = -v_cm / u_cm; hi_cm = m * ho_cm;
+            v_cm = 1 / (1/f_cm - 1/u_cm);
+            m = -v_cm / u_cm;
+            hi_cm = m * ho_cm;
         }
 
         const imageX = poleX - (v_cm * scale);
         const hi_px = hi_cm * scale;
+        
         if (v_cm !== Infinity) {
              drawArrow(imageX, axisY, hi_px, 'red', v_cm < 0);
         }
@@ -326,17 +365,18 @@ document.addEventListener('DOMContentLoaded', () => {
             const imageTipY = axisY - hi_px;
             drawRay(state.objectX, objectTipY, poleX, objectTipY, 'orange');
             drawRay(poleX, objectTipY, imageX, imageTipY, 'orange', v_cm < 0);
-            if (v_cm > 0) drawRay(poleX, objectTipY, imageX, imageTipY, 'orange');
-            
+            if(v_cm > 0) drawRay(poleX, objectTipY, imageX, imageTipY, 'orange');
+
             if(u_cm > f_cm || state.mirrorType === 'convex') {
                 const slope = (objectTipY - axisY) / (state.objectX - fX);
                 const yAtMirror = objectTipY - slope * (state.objectX - poleX);
                 drawRay(state.objectX, objectTipY, poleX, yAtMirror, 'green');
                 drawRay(poleX, yAtMirror, imageX, imageTipY, 'green', v_cm < 0);
-                 if (v_cm > 0) drawRay(poleX, yAtMirror, imageX, imageTipY, 'green');
+                if(v_cm > 0) drawRay(poleX, yAtMirror, imageX, imageTipY, 'green');
             }
         }
         
+        // --- UPDATE PANELS ---
         focalLengthValueSpan.textContent = state.focalLength;
         objectHeightValueSpan.textContent = state.objectHeight;
         resultF.textContent = `${f_cm.toFixed(1)} cm`;
@@ -344,27 +384,37 @@ document.addEventListener('DOMContentLoaded', () => {
         resultU.textContent = `${u_cm.toFixed(1)} cm`;
         resultHo.textContent = `${ho_cm.toFixed(1)} cm`;
         
+        // Update Formulas and Results
         if (v_cm === Infinity) {
             resultV.textContent = "Infinity"; resultHi.textContent = "Infinity"; resultM.textContent = "Infinity";
             natureDiv.innerHTML = "Image is formed at infinity.";
+            mirrorFormulaDiv.innerHTML = `1/${f_cm.toFixed(1)} = 1/${u_cm.toFixed(1)} + 1/∞`;
+            magnificationFormulaDiv.innerHTML = `m = -∞ / ${u_cm.toFixed(1)} = ∞`;
         } else {
-            resultV.textContent = `${v_cm.toFixed(1)} cm`; resultHi.textContent = `${hi_cm.toFixed(1)} cm`; resultM.textContent = m.toFixed(2);
-            let natureText = `${v_cm > 0 ? 'Real' : 'Virtual'}, ${m < 0 ? 'Inverted' : 'Erect'}, `;
+            resultV.textContent = `${v_cm.toFixed(1)} cm`;
+            resultHi.textContent = `${hi_cm.toFixed(1)} cm`;
+            resultM.textContent = m.toFixed(2);
+            let natureText = `${v_cm > 0 ? 'Real' : 'Virtual'}, ${hi_cm < 0 ? 'Inverted' : 'Erect'}, `;
             if (Math.abs(m) > 1.05) natureText += 'Magnified';
             else if (Math.abs(m) < 0.95) natureText += 'Diminished';
             else natureText += 'Same Size';
             natureDiv.innerHTML = natureText;
+
+            mirrorFormulaDiv.innerHTML = `1/${f_cm.toFixed(1)} = 1/${u_cm.toFixed(1)} + 1/${v_cm.toFixed(1)}`;
+            magnificationFormulaDiv.innerHTML = `m = -(${v_cm.toFixed(1)}) / (${u_cm.toFixed(1)}) = ${m.toFixed(2)}`;
         }
     }
 
     // Event Listeners
-    [focalLengthSlider, objectHeightSlider, concaveRadio, convexRadio].forEach(el => el.addEventListener('input', drawSimulation));
+    [focalLengthSlider, objectHeightSlider, concaveRadio, convexRadio, invertObjectCheckbox].forEach(el => el.addEventListener('input', drawSimulation));
 
     canvas.addEventListener('mousedown', (e) => {
         const rect = canvas.getBoundingClientRect();
         const mouseX = e.clientX - rect.left;
         const mouseY = e.clientY - rect.top;
-        if (Math.abs(mouseX - state.objectX) < 15 && mouseY > (axisY - (state.objectHeight * scale)) && mouseY < axisY) {
+        const ho_px = (state.isObjectInverted ? -state.objectHeight : state.objectHeight) * scale;
+        
+        if (Math.abs(mouseX - state.objectX) < 15 && ((ho_px > 0 && mouseY > axisY - ho_px && mouseY < axisY) || (ho_px < 0 && mouseY > axisY && mouseY < axisY - ho_px))) {
             state.isDragging = true;
             canvas.style.cursor = 'grabbing';
         }
