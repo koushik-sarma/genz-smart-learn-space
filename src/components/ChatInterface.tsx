@@ -33,6 +33,18 @@ export default function ChatInterface({ chapterTitle, chapterNotes }: ChatInterf
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
+  const formatAIResponse = (content: string) => {
+    return content
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      .replace(/\n\n/g, '</p><p>')
+      .replace(/\n- /g, '<br/>• ')
+      .replace(/\n\d+\./g, '<br/>$&')
+      .replace(/^/, '<p>')
+      .replace(/$/, '</p>')
+      .replace(/<p><\/p>/g, '');
+  };
+
   const scrollToBottom = () => {
     if (scrollAreaRef.current) {
       const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
@@ -145,7 +157,15 @@ export default function ChatInterface({ chapterTitle, chapterNotes }: ChatInterf
                       ? 'bg-gradient-primary text-white rounded-br-sm'
                       : 'bg-white/5 border border-white/10 text-gray-300 rounded-bl-sm'
                   }`}>
-                    <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+                    <div className="text-sm leading-relaxed prose prose-invert max-w-none">
+                      {message.isUser ? (
+                        <p>{message.content}</p>
+                      ) : (
+                        <div dangerouslySetInnerHTML={{ 
+                          __html: formatAIResponse(message.content) 
+                        }} />
+                      )}
+                    </div>
                   </div>
                   <p className={`text-xs text-gray-500 mt-1 ${message.isUser ? 'text-right' : 'text-left'}`}>
                     {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

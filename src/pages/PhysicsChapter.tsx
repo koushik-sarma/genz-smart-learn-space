@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, BookOpen, MessageCircle, Brain, Zap } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import ChatInterface from '@/components/ChatInterface';
+import QuizInterface from '@/components/QuizInterface';
 
 interface ChapterNotes {
   physics_notes_id: number;
@@ -257,18 +258,10 @@ export default function PhysicsChapter() {
           </TabsContent>
 
           <TabsContent value="quiz" className="mt-6">
-            <Card className="bg-white/10 backdrop-blur-xl border-white/20 text-center py-12">
-              <CardContent>
-                <Brain className="h-16 w-16 text-purple-300 mx-auto mb-4" />
-                <div className="text-white text-lg mb-2">Practice Quiz</div>
-                <div className="text-gray-300 mb-4">
-                  Test your knowledge with AI-generated questions on {chapter.chapter}
-                </div>
-                <Button className="bg-gradient-primary hover:shadow-glow transition-all duration-300">
-                  Generate Quiz
-                </Button>
-              </CardContent>
-            </Card>
+            <QuizInterface 
+              chapterTitle={chapter.chapter}
+              chapterNotes={notes}
+            />
           </TabsContent>
 
           <TabsContent value="simulation" className="mt-6">
