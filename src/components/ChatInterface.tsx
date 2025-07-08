@@ -61,6 +61,10 @@ export default function ChatInterface({ chapterTitle, chapterNotes }: ChatInterf
     setIsLoading(true);
 
     try {
+      console.log('Sending message to AI tutor:', inputMessage);
+      console.log('Chapter title:', chapterTitle);
+      console.log('Chapter notes:', chapterNotes);
+
       const { data, error } = await supabase.functions.invoke('physics-tutor-chat', {
         body: {
           message: inputMessage,
@@ -69,7 +73,16 @@ export default function ChatInterface({ chapterTitle, chapterNotes }: ChatInterf
         }
       });
 
-      if (error) throw error;
+      console.log('Edge function response:', { data, error });
+
+      if (error) {
+        console.error('Edge function error:', error);
+        throw error;
+      }
+
+      if (!data || !data.reply) {
+        throw new Error('No reply received from AI tutor');
+      }
 
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -80,12 +93,12 @@ export default function ChatInterface({ chapterTitle, chapterNotes }: ChatInterf
 
       setMessages(prev => [...prev, aiMessage]);
     } catch (error: any) {
+      console.error('Chat error details:', error);
       toast({
         title: "Error",
-        description: "Failed to get response from AI tutor. Please try again.",
+        description: `Failed to get response from AI tutor: ${error.message || 'Unknown error'}`,
         variant: "destructive"
       });
-      console.error('Chat error:', error);
     } finally {
       setIsLoading(false);
     }

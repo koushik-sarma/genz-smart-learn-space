@@ -9,17 +9,24 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  console.log('Physics tutor chat function called:', req.method);
+  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    console.log('Reading request body...');
     const { message, chapterTitle, chapterNotes } = await req.json();
+    console.log('Request data:', { message, chapterTitle, hasNotes: !!chapterNotes });
 
     if (!openAIApiKey) {
+      console.error('OpenAI API key not found');
       throw new Error('OpenAI API key not configured');
     }
+
+    console.log('OpenAI API key found, preparing system prompt...');
 
     const systemPrompt = `You are a Physics tutor specialized in helping students understand ${chapterTitle}. 
 
@@ -40,6 +47,8 @@ Guidelines:
 - Encourage deeper understanding through follow-up questions
 - Stay focused on the chapter topic: ${chapterTitle}`;
 
+    console.log('Making OpenAI API request...');
+
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -57,19 +66,34 @@ Guidelines:
       }),
     });
 
+    console.log('OpenAI API response status:', response.status);
+
     if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.status}`);
+      const errorText = await response.text();
+      console.error('OpenAI API error:', response.status, errorText);
+      throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
-    const reply = data.choices[0].message.content;
+    console.log('OpenAI API response received successfully');
+    
+    const reply = data.choices?.[0]?.message?.content;
+    
+    if (!reply) {
+      console.error('No reply in OpenAI response:', data);
+      throw new Error('No reply received from OpenAI');
+    }
 
+    console.log('Sending successful response');
     return new Response(JSON.stringify({ reply }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
     console.error('Error in physics-tutor-chat function:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ 
+      error: error.message || 'An unknown error occurred',
+      details: error.toString()
+    }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
