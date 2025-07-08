@@ -261,7 +261,7 @@ const Index = () => {
               <div className="p-2 bg-gradient-primary rounded-xl">
                 <BookOpen className="h-6 w-6 text-white" />
               </div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-white to-purple-200 bg-clip-text text-transparent">EduAI</span>
+              <span className="text-2xl font-bold bg-gradient-to-r from-white to-purple-200 bg-clip-text text-transparent">Edgenius</span>
             </div>
             <div className="flex space-x-8 text-gray-400">
               <a href="#" className="hover:text-white transition-colors text-lg">Privacy Policy</a>
