@@ -3,7 +3,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ArrowLeft, BookOpen } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -125,60 +124,50 @@ export default function Physics() {
           </div>
         </div>
 
-        {/* Chapters Table */}
-        <Card className="bg-white/10 backdrop-blur-xl border-white/20">
-          <CardHeader>
-            <CardTitle className="text-white text-xl">Physics Chapters</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {chapters.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-white/20 hover:bg-white/5">
-                    <TableHead className="text-gray-300">Chapter</TableHead>
-                    <TableHead className="text-gray-300">Description</TableHead>
-                    {chapters.some(ch => ch.part) && (
-                      <TableHead className="text-gray-300">Part</TableHead>
-                    )}
-                    <TableHead className="text-gray-300">Action</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {chapters.map((chapter) => (
-                    <TableRow key={chapter.physic_chapter_id} className="border-white/20 hover:bg-white/5">
-                      <TableCell className="text-white font-medium">
-                        {chapter.chapter}
-                      </TableCell>
-                      <TableCell className="text-gray-300">
-                        {chapter.chapter_description}
-                      </TableCell>
-                      {chapters.some(ch => ch.part) && (
-                        <TableCell className="text-gray-300">
-                          {chapter.part || '-'}
-                        </TableCell>
-                      )}
-                      <TableCell>
-                        <Button 
-                          size="sm"
-                          className="bg-gradient-primary hover:shadow-glow transition-all duration-300"
-                        >
-                          Start Learning
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            ) : (
-              <div className="text-center py-12">
-                <div className="text-white text-lg mb-2">No chapters found</div>
-                <div className="text-gray-300">
-                  Physics chapters for your class and board will appear here once they're available.
+        {/* Chapters Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {chapters.map((chapter) => (
+            <Card key={chapter.physic_chapter_id} className="bg-white/10 backdrop-blur-xl border-white/20 hover:bg-white/15 transition-all cursor-pointer">
+              <CardHeader>
+                <CardTitle className="text-white text-lg">{chapter.chapter}</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="text-sm text-gray-300">
+                  {chapter.chapter_description}
                 </div>
+                
+                {chapter.part && (
+                  <div className="text-xs text-purple-300 bg-purple-500/20 px-2 py-1 rounded-full inline-block">
+                    Part: {chapter.part}
+                  </div>
+                )}
+                
+                <div className="flex justify-between items-center pt-2">
+                  <div className="text-sm text-gray-400">
+                    Chapter {chapter.physic_chapter_id}
+                  </div>
+                  <Button 
+                    size="sm" 
+                    className="bg-gradient-primary hover:shadow-glow transition-all duration-300"
+                  >
+                    Start Learning
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {chapters.length === 0 && (
+          <Card className="bg-white/10 backdrop-blur-xl border-white/20 text-center py-12">
+            <CardContent>
+              <div className="text-white text-lg mb-2">No chapters found</div>
+              <div className="text-gray-300">
+                Physics chapters for your class and board will appear here once they're available.
               </div>
-            )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
