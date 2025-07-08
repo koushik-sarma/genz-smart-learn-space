@@ -108,7 +108,7 @@ export default function PhysicsChapter() {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
       <div className="absolute inset-0 bg-gradient-hero opacity-40 animate-gradient bg-[length:400%_400%]"></div>
       
-      <div className="relative z-10 p-6">
+      <div className="relative z-10 p-6 pb-12">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
           <Button 
@@ -162,7 +162,14 @@ export default function PhysicsChapter() {
                     <CardTitle className="text-white">Chapter Summary</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-gray-300 whitespace-pre-wrap">{notes.chapter_summary}</p>
+                    <div className="text-gray-300 space-y-2">
+                      {notes.chapter_summary.split(/[;.]/).filter(point => point.trim()).map((point, index) => (
+                        <div key={index} className="flex items-start gap-2">
+                          <span className="text-purple-300 mt-1">•</span>
+                          <span>{point.trim()}</span>
+                        </div>
+                      ))}
+                    </div>
                   </CardContent>
                 </Card>
 
@@ -171,7 +178,14 @@ export default function PhysicsChapter() {
                     <CardTitle className="text-white">Key Discussion Points</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-gray-300 whitespace-pre-wrap">{notes.chapter_discussion_points}</p>
+                    <div className="text-gray-300 space-y-2">
+                      {notes.chapter_discussion_points.split(/[;.]/).filter(point => point.trim()).map((point, index) => (
+                        <div key={index} className="flex items-start gap-2">
+                          <span className="text-purple-300 mt-1">•</span>
+                          <span>{point.trim()}</span>
+                        </div>
+                      ))}
+                    </div>
                   </CardContent>
                 </Card>
 
@@ -180,7 +194,13 @@ export default function PhysicsChapter() {
                     <CardTitle className="text-white">Important Formulae</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-gray-300 whitespace-pre-wrap">{notes.chapter_formulae}</p>
+                    <div className="text-gray-300 space-y-3">
+                      {notes.chapter_formulae.split(/[;.]/).filter(formula => formula.trim()).map((formula, index) => (
+                        <div key={index} className="bg-slate-800/50 p-3 rounded-md border border-white/10">
+                          <code className="text-purple-300 font-mono text-sm">{formula.trim()}</code>
+                        </div>
+                      ))}
+                    </div>
                   </CardContent>
                 </Card>
 
@@ -189,7 +209,14 @@ export default function PhysicsChapter() {
                     <CardTitle className="text-white">Important Diagrams</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-gray-300 whitespace-pre-wrap">{notes.chapter_important_diagrams}</p>
+                    <div className="text-gray-300 space-y-2">
+                      {notes.chapter_important_diagrams.split(/[;.]/).filter(point => point.trim()).map((point, index) => (
+                        <div key={index} className="flex items-start gap-2">
+                          <span className="text-purple-300 mt-1">•</span>
+                          <span>{point.trim()}</span>
+                        </div>
+                      ))}
+                    </div>
                   </CardContent>
                 </Card>
 
@@ -198,7 +225,14 @@ export default function PhysicsChapter() {
                     <CardTitle className="text-white">Key Takeaways</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-gray-300 whitespace-pre-wrap">{notes.chapter_takeaways}</p>
+                    <div className="text-gray-300 space-y-2">
+                      {notes.chapter_takeaways.split(/[;.]/).filter(point => point.trim()).map((point, index) => (
+                        <div key={index} className="flex items-start gap-2">
+                          <span className="text-purple-300 mt-1">•</span>
+                          <span>{point.trim()}</span>
+                        </div>
+                      ))}
+                    </div>
                   </CardContent>
                 </Card>
               </div>
