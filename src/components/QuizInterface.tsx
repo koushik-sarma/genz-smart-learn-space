@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Brain, CheckCircle, XCircle, RotateCcw, Lightbulb } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -111,11 +112,15 @@ export default function QuizInterface({ chapterTitle, chapterNotes }: QuizInterf
 
   if (!quizStarted) {
     return (
-      <Card className="bg-white/10 backdrop-blur-xl border-white/20 text-center py-12">
-        <CardContent>
-          <Brain className="h-16 w-16 text-purple-300 mx-auto mb-6" />
-          <div className="text-white text-xl mb-2">Physics Quiz</div>
-          <div className="text-gray-300 mb-6 max-w-md mx-auto">
+      <Card className="bg-white/10 backdrop-blur-xl border-white/20 max-w-2xl mx-auto">
+        <CardHeader>
+          <CardTitle className="text-white text-center flex items-center justify-center gap-2">
+            <Brain className="h-6 w-6" />
+            Physics Quiz
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="text-center py-8">
+          <div className="text-gray-300 mb-6 text-sm">
             Test your understanding of {chapterTitle} with AI-generated questions tailored to the chapter content.
           </div>
           <Button 
@@ -145,24 +150,27 @@ export default function QuizInterface({ chapterTitle, chapterNotes }: QuizInterf
     const total = quiz.length;
     
     return (
-      <div className="space-y-6">
+      <div className="max-w-2xl mx-auto">
         <Card className="bg-white/10 backdrop-blur-xl border-white/20">
           <CardHeader>
-            <CardTitle className="text-white text-center">Quiz Results</CardTitle>
+            <CardTitle className="text-white text-center flex items-center justify-center gap-2">
+              <Brain className="h-5 w-5" />
+              Quiz Results
+            </CardTitle>
           </CardHeader>
-          <CardContent className="text-center">
-            <div className={`text-4xl font-bold mb-2 ${getScoreColor(score, total)}`}>
+          <CardContent className="text-center pb-4">
+            <div className={`text-3xl font-bold mb-2 ${getScoreColor(score, total)}`}>
               {score}/{total}
             </div>
-            <div className="text-gray-300 mb-6">
+            <div className="text-gray-300 mb-4 text-sm">
               {score === total ? "Perfect! 🎉" : score >= total * 0.8 ? "Great job! 👏" : score >= total * 0.6 ? "Good effort! 👍" : "Keep studying! 📚"}
             </div>
-            <div className="flex gap-4 justify-center">
-              <Button onClick={resetQuiz} variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
+            <div className="flex gap-3 justify-center">
+              <Button onClick={resetQuiz} variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20 text-sm">
                 <RotateCcw className="w-4 h-4 mr-2" />
                 Try Again
               </Button>
-              <Button onClick={generateQuiz} className="bg-gradient-primary hover:shadow-glow transition-all duration-300">
+              <Button onClick={generateQuiz} className="bg-gradient-primary hover:shadow-glow transition-all duration-300 text-sm">
                 <Brain className="w-4 h-4 mr-2" />
                 New Quiz
               </Button>
@@ -170,65 +178,72 @@ export default function QuizInterface({ chapterTitle, chapterNotes }: QuizInterf
           </CardContent>
         </Card>
 
-        {/* Detailed Results */}
-        <div className="space-y-4">
-          {quiz.map((question, index) => {
-            const userAnswer = selectedAnswers[index];
-            const isCorrect = userAnswer === question.correctAnswer;
-            
-            return (
-              <Card key={index} className="bg-white/5 backdrop-blur-xl border-white/10">
-                <CardContent className="p-6">
-                  <div className="flex items-start gap-3 mb-4">
-                    {isCorrect ? (
-                      <CheckCircle className="w-6 h-6 text-green-400 flex-shrink-0 mt-1" />
-                    ) : (
-                      <XCircle className="w-6 h-6 text-red-400 flex-shrink-0 mt-1" />
-                    )}
-                    <div className="flex-1">
-                      <h3 className="text-white font-medium mb-3">
-                        Question {index + 1}: {question.question}
-                      </h3>
-                      
-                      <div className="space-y-2 mb-4">
-                        {question.options.map((option, optionIndex) => (
-                          <div
-                            key={optionIndex}
-                            className={`p-2 rounded-md border ${
-                              optionIndex === question.correctAnswer
-                                ? 'border-green-400 bg-green-400/10'
-                                : optionIndex === userAnswer && !isCorrect
-                                ? 'border-red-400 bg-red-400/10'
-                                : 'border-white/20'
-                            }`}
-                          >
-                            <span className="text-gray-300">{option}</span>
-                            {optionIndex === question.correctAnswer && (
-                              <span className="text-green-400 ml-2">✓ Correct</span>
-                            )}
-                            {optionIndex === userAnswer && !isCorrect && (
-                              <span className="text-red-400 ml-2">✗ Your answer</span>
-                            )}
+        {/* Detailed Results in Scrollable Container */}
+        <Card className="bg-white/10 backdrop-blur-xl border-white/20 mt-4">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-white text-lg">Question Review</CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <ScrollArea className="h-80">
+              <div className="space-y-3 p-4">
+                {quiz.map((question, index) => {
+                  const userAnswer = selectedAnswers[index];
+                  const isCorrect = userAnswer === question.correctAnswer;
+                  
+                  return (
+                    <div key={index} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-lg p-4">
+                      <div className="flex items-start gap-3">
+                        {isCorrect ? (
+                          <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0 mt-1" />
+                        ) : (
+                          <XCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-1" />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-white font-medium mb-3 text-sm">
+                            Question {index + 1}: {question.question}
+                          </h3>
+                          
+                          <div className="space-y-1 mb-3">
+                            {question.options.map((option, optionIndex) => (
+                              <div
+                                key={optionIndex}
+                                className={`p-2 rounded-md border text-sm ${
+                                  optionIndex === question.correctAnswer
+                                    ? 'border-green-400 bg-green-400/10'
+                                    : optionIndex === userAnswer && !isCorrect
+                                    ? 'border-red-400 bg-red-400/10'
+                                    : 'border-white/20'
+                                }`}
+                              >
+                                <span className="text-gray-300">{option}</span>
+                                {optionIndex === question.correctAnswer && (
+                                  <span className="text-green-400 ml-2 text-xs">✓ Correct</span>
+                                )}
+                                {optionIndex === userAnswer && !isCorrect && (
+                                  <span className="text-red-400 ml-2 text-xs">✗ Your answer</span>
+                                )}
+                              </div>
+                            ))}
                           </div>
-                        ))}
-                      </div>
-                      
-                      <div className="bg-blue-500/10 border border-blue-500/20 rounded-md p-3">
-                        <div className="flex items-start gap-2">
-                          <Lightbulb className="w-4 h-4 text-blue-400 flex-shrink-0 mt-0.5" />
-                          <div>
-                            <span className="text-blue-400 font-medium">Explanation:</span>
-                            <p className="text-gray-300 mt-1">{question.explanation}</p>
+                          
+                          <div className="bg-blue-500/10 border border-blue-500/20 rounded-md p-3">
+                            <div className="flex items-start gap-2">
+                              <Lightbulb className="w-4 h-4 text-blue-400 flex-shrink-0 mt-0.5" />
+                              <div>
+                                <span className="text-blue-400 font-medium text-sm">Explanation:</span>
+                                <p className="text-gray-300 mt-1 text-sm">{question.explanation}</p>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+                  );
+                })}
+              </div>
+            </ScrollArea>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -237,12 +252,12 @@ export default function QuizInterface({ chapterTitle, chapterNotes }: QuizInterf
   const progress = ((currentQuestionIndex + 1) / quiz.length) * 100;
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-2xl mx-auto space-y-4">
       {/* Progress */}
-      <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-lg p-4">
+      <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-lg p-3">
         <div className="flex justify-between items-center mb-2">
-          <span className="text-white font-medium">Question {currentQuestionIndex + 1} of {quiz.length}</span>
-          <span className="text-gray-300">{Math.round(progress)}% Complete</span>
+          <span className="text-white font-medium text-sm">Question {currentQuestionIndex + 1} of {quiz.length}</span>
+          <span className="text-gray-300 text-sm">{Math.round(progress)}% Complete</span>
         </div>
         <div className="w-full bg-white/20 rounded-full h-2">
           <div 
@@ -254,8 +269,8 @@ export default function QuizInterface({ chapterTitle, chapterNotes }: QuizInterf
 
       {/* Question */}
       <Card className="bg-white/10 backdrop-blur-xl border-white/20">
-        <CardHeader>
-          <CardTitle className="text-white">{currentQuestion.question}</CardTitle>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-white text-lg">{currentQuestion.question}</CardTitle>
         </CardHeader>
         <CardContent>
           <RadioGroup 
@@ -263,9 +278,9 @@ export default function QuizInterface({ chapterTitle, chapterNotes }: QuizInterf
             onValueChange={(value) => handleAnswerSelect(parseInt(value))}
           >
             {currentQuestion.options.map((option, index) => (
-              <div key={index} className="flex items-center space-x-2 p-3 rounded-md hover:bg-white/5 transition-colors">
+              <div key={index} className="flex items-center space-x-2 p-2 rounded-md hover:bg-white/5 transition-colors">
                 <RadioGroupItem value={index.toString()} id={`option-${index}`} />
-                <Label htmlFor={`option-${index}`} className="text-gray-300 cursor-pointer flex-1">
+                <Label htmlFor={`option-${index}`} className="text-gray-300 cursor-pointer flex-1 text-sm">
                   {option}
                 </Label>
               </div>
@@ -275,12 +290,12 @@ export default function QuizInterface({ chapterTitle, chapterNotes }: QuizInterf
       </Card>
 
       {/* Navigation */}
-      <div className="flex gap-4 justify-between">
+      <div className="flex gap-3 justify-between">
         <Button 
           onClick={previousQuestion}
           disabled={currentQuestionIndex === 0}
           variant="outline"
-          className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+          className="bg-white/10 border-white/20 text-white hover:bg-white/20 text-sm"
         >
           Previous
         </Button>
@@ -290,7 +305,7 @@ export default function QuizInterface({ chapterTitle, chapterNotes }: QuizInterf
             <Button 
               onClick={submitQuiz}
               disabled={selectedAnswers[currentQuestionIndex] === -1}
-              className="bg-gradient-primary hover:shadow-glow transition-all duration-300"
+              className="bg-gradient-primary hover:shadow-glow transition-all duration-300 text-sm"
             >
               Submit Quiz
             </Button>
@@ -298,7 +313,7 @@ export default function QuizInterface({ chapterTitle, chapterNotes }: QuizInterf
             <Button 
               onClick={nextQuestion}
               disabled={selectedAnswers[currentQuestionIndex] === -1}
-              className="bg-gradient-primary hover:shadow-glow transition-all duration-300"
+              className="bg-gradient-primary hover:shadow-glow transition-all duration-300 text-sm"
             >
               Next
             </Button>
