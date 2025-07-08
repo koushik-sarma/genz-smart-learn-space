@@ -147,6 +147,7 @@ export default function Physics() {
                   <Button 
                     size="sm" 
                     className="bg-gradient-primary hover:shadow-glow transition-all duration-300"
+                    onClick={() => navigate(`/physics/chapter/${chapter.physic_chapter_id}`)}
                   >
                     Start Learning
                   </Button>

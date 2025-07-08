@@ -92,6 +92,45 @@ export type Database = {
         }
         Relationships: []
       }
+      dim_physics_chapters_notes: {
+        Row: {
+          board_id: number
+          chapter_discussion_points: string
+          chapter_formulae: string
+          chapter_id: number
+          chapter_important_diagrams: string
+          chapter_summary: string
+          chapter_takeaways: string
+          class: number
+          physics_notes_id: number
+          subject_id: number
+        }
+        Insert: {
+          board_id: number
+          chapter_discussion_points: string
+          chapter_formulae: string
+          chapter_id: number
+          chapter_important_diagrams: string
+          chapter_summary: string
+          chapter_takeaways: string
+          class?: number
+          physics_notes_id?: number
+          subject_id: number
+        }
+        Update: {
+          board_id?: number
+          chapter_discussion_points?: string
+          chapter_formulae?: string
+          chapter_id?: number
+          chapter_important_diagrams?: string
+          chapter_summary?: string
+          chapter_takeaways?: string
+          class?: number
+          physics_notes_id?: number
+          subject_id?: number
+        }
+        Relationships: []
+      }
       dim_physics_subject: {
         Row: {
           board_id: number
