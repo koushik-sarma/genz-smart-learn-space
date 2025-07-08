@@ -272,7 +272,7 @@ export default function PhysicsChapter() {
                 </CardHeader>
                 <CardContent className="p-0">
                   <iframe
-                    src="/reflection-simulation.html"
+                    src="/reflection-simulation.html.html"
                     className="w-full h-[600px] border-0 rounded-b-lg"
                     title="Reflection of Light Simulation"
                     style={{ minHeight: '600px' }}
