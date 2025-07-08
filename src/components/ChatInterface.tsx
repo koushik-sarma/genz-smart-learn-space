@@ -112,79 +112,93 @@ export default function ChatInterface({ chapterTitle, chapterNotes }: ChatInterf
   };
 
   return (
-    <Card className="bg-white/10 backdrop-blur-xl border-white/20 h-[600px] flex flex-col">
-      <CardContent className="flex-1 flex flex-col p-4">
-        <ScrollArea ref={scrollAreaRef} className="flex-1 pr-4">
-          <div className="space-y-4">
+    <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-lg h-[500px] flex flex-col shadow-lg">
+      {/* Chat Header */}
+      <div className="flex items-center gap-3 p-4 border-b border-white/10">
+        <div className="p-2 bg-gradient-primary rounded-full">
+          <Bot className="w-5 h-5 text-white" />
+        </div>
+        <div>
+          <h3 className="text-white font-medium">AI Physics Tutor</h3>
+          <p className="text-xs text-gray-400">Ask questions about {chapterTitle}</p>
+        </div>
+      </div>
+
+      {/* Messages Area */}
+      <div className="flex-1 overflow-hidden">
+        <ScrollArea ref={scrollAreaRef} className="h-full">
+          <div className="p-4 space-y-4">
             {messages.map((message) => (
               <div
                 key={message.id}
-                className={`flex items-start gap-3 ${
-                  message.isUser ? 'flex-row-reverse' : 'flex-row'
-                }`}
+                className={`flex gap-3 ${message.isUser ? 'justify-end' : 'justify-start'}`}
               >
-                <div className={`p-2 rounded-lg ${
-                  message.isUser 
-                    ? 'bg-gradient-primary' 
-                    : 'bg-white/10 border border-white/20'
-                }`}>
-                  {message.isUser ? (
-                    <User className="w-4 h-4 text-white" />
-                  ) : (
+                {!message.isUser && (
+                  <div className="flex-shrink-0 w-8 h-8 bg-white/10 border border-white/20 rounded-full flex items-center justify-center">
                     <Bot className="w-4 h-4 text-purple-300" />
-                  )}
-                </div>
-                <div className={`flex-1 max-w-[80%] ${
-                  message.isUser ? 'text-right' : 'text-left'
-                }`}>
-                  <div className={`p-3 rounded-lg ${
-                    message.isUser
-                      ? 'bg-gradient-primary text-white'
-                      : 'bg-white/5 border border-white/10 text-gray-300'
-                  }`}>
-                    <p className="whitespace-pre-wrap">{message.content}</p>
                   </div>
-                  <p className="text-xs text-gray-400 mt-1">
-                    {message.timestamp.toLocaleTimeString()}
+                )}
+                
+                <div className={`max-w-[75%] ${message.isUser ? 'order-1' : ''}`}>
+                  <div className={`rounded-lg px-4 py-2 ${
+                    message.isUser
+                      ? 'bg-gradient-primary text-white rounded-br-sm'
+                      : 'bg-white/5 border border-white/10 text-gray-300 rounded-bl-sm'
+                  }`}>
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+                  </div>
+                  <p className={`text-xs text-gray-500 mt-1 ${message.isUser ? 'text-right' : 'text-left'}`}>
+                    {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </p>
                 </div>
+
+                {message.isUser && (
+                  <div className="flex-shrink-0 w-8 h-8 bg-gradient-primary rounded-full flex items-center justify-center order-2">
+                    <User className="w-4 h-4 text-white" />
+                  </div>
+                )}
               </div>
             ))}
+            
             {isLoading && (
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-white/10 border border-white/20">
+              <div className="flex gap-3 justify-start">
+                <div className="flex-shrink-0 w-8 h-8 bg-white/10 border border-white/20 rounded-full flex items-center justify-center">
                   <Bot className="w-4 h-4 text-purple-300" />
                 </div>
-                <div className="bg-white/5 border border-white/10 text-gray-300 p-3 rounded-lg">
+                <div className="bg-white/5 border border-white/10 text-gray-300 rounded-lg rounded-bl-sm px-4 py-3">
                   <div className="flex space-x-1">
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                    <div className="w-2 h-2 bg-purple-300 rounded-full animate-bounce"></div>
+                    <div className="w-2 h-2 bg-purple-300 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                    <div className="w-2 h-2 bg-purple-300 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                   </div>
                 </div>
               </div>
             )}
           </div>
         </ScrollArea>
+      </div>
         
-        <div className="flex gap-2 mt-4">
+      {/* Input Area */}
+      <div className="p-4 border-t border-white/10">
+        <div className="flex gap-2">
           <Input
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder="Ask me anything about this chapter..."
+            placeholder="Type your question..."
             disabled={isLoading}
-            className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+            className="flex-1 bg-white/5 border-white/20 text-white placeholder:text-gray-400 focus:bg-white/10 transition-colors"
           />
           <Button
             onClick={sendMessage}
             disabled={!inputMessage.trim() || isLoading}
-            className="bg-gradient-primary hover:shadow-glow transition-all duration-300"
+            size="sm"
+            className="bg-gradient-primary hover:shadow-glow transition-all duration-300 px-4"
           >
             <Send className="w-4 h-4" />
           </Button>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
