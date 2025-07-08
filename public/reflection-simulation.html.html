@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Mirror Lab v3</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 20px;
+            background-color: #f0f2f5;
+            color: #333;
+            flex-wrap: wrap;
+            margin: 0; /* Important for embedding */
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 1200px;
+        }
+        .simulation-wrapper {
+            display: flex;
+            width: 100%;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .controls {
+            width: 250px;
+            padding: 20px;
+            border-right: 1px solid #ddd;
+            background-color: #fafafa;
+        }
+        .controls h3 {
+            margin-top: 0;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        .control-group {
+            margin-bottom: 20px;
+        }
+        .control-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        .control-group input[type="range"] {
+            width: 100%;
+        }
+        .mirror-type label {
+            display: inline-block;
+            margin-right: 10px;
+        }
+        canvas {
+            background-color: #ffffff;
+            cursor: grab;
+        }
+        .results {
+            width: 250px;
+            padding: 20px;
+            border-left: 1px solid #ddd;
+            background-color: #fafafa;
+        }
+        .results h3 {
+             margin-top: 0;
+            border-bottom: 2px solid #28a745;
+            padding-bottom: 10px;
+        }
+        .result-item {
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+        .result-item strong {
+            display: inline-block;
+            width: 150px;
+        }
+        .nature-of-image {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #28a745;
+            border-radius: 4px;
+            background-color: #eaf6ec;
+        }
+        h1, p.instructions {
+            text-align: center;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Interactive Mirror Lab: Reflection at Curved Surfaces</h1>
+    <p class="instructions">Click and drag the <strong>blue object arrow</strong>. Use the controls to change mirror properties.</p>
+    
+    <div class="simulation-wrapper">
+        <div class="controls">
+            <h3>Controls</h3>
+            <div class="control-group mirror-type">
+                <label>Mirror Type:</label>
+                <input type="radio" id="concave" name="mirrorType" value="concave" checked>
+                <label for="concave">Concave</label>
+                <input type="radio" id="convex" name="mirrorType" value="convex">
+                <label for="convex">Convex</label>
+            </div>
+            <div class="control-group">
+                <label for="focalLength">Focal Length (f): <span id="focalLengthValue"></span> cm</label>
+                <input type="range" id="focalLength" min="10" max="50" value="30">
+            </div>
+            <div class="control-group">
+                <label for="objectHeight">Object Height (hₒ): <span id="objectHeightValue"></span> cm</label>
+                <input type="range" id="objectHeight" min="1" max="25" value="10">
+            </div>
+        </div>
+
+        <canvas id="simulationCanvas" width="700" height="500"></canvas>
+
+        <div class="results">
+            <h3>Results</h3>
+            <div class="result-item"><strong>Focal Length (f):</strong> <span id="result_f"></span></div>
+            <div class="result-item"><strong>Radius (R):</strong> <span id="result_R"></span></div>
+            <hr>
+            <div class="result-item"><strong>Object Distance (u):</strong> <span id="result_u"></span></div>
+            <div class="result-item"><strong>Image Distance (v):</strong> <span id="result_v"></span></div>
+            <div class="result-item"><strong>Object Height (hₒ):</strong> <span id="result_ho"></span></div>
+            <div class="result-item"><strong>Image Height (hᵢ):</strong> <span id="result_hi"></span></div>
+            <div class="result-item"><strong>Magnification (m):</strong> <span id="result_m"></span></div>
+            
+            <div class="nature-of-image">
+                <strong>Nature of Image:</strong>
+                <div id="nature"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const canvas = document.getElementById('simulationCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // Controls
+    const focalLengthSlider = document.getElementById('focalLength');
+    const objectHeightSlider = document.getElementById('objectHeight');
+    const concaveRadio = document.getElementById('concave');
+    const convexRadio = document.getElementById('convex');
+
+    // Value Displays
+    const focalLengthValueSpan = document.getElementById('focalLengthValue');
+    const objectHeightValueSpan = document.getElementById('objectHeightValue');
+    
+    // Results
+    const resultF = document.getElementById('result_f');
+    const resultR = document.getElementById('result_R');
+    const resultU = document.getElementById('result_u');
+    const resultV = document.getElementById('result_v');
+    const resultHo = document.getElementById('result_ho');
+    const resultHi = document.getElementById('result_hi');
+    const resultM = document.getElementById('result_m');
+    const natureDiv = document.getElementById('nature');
+
+    // Simulation Constants
+    const scale = 5; 
+    const poleX = canvas.width / 2;
+    const axisY = canvas.height / 2;
+    const mirrorRadius = 250;
+    const mirrorHeight = 120;
+
+    // Simulation State
+    let state = {
+        mirrorType: 'concave',
+        focalLength: 30,
+        objectHeight: 10,
+        objectX: poleX - 70 * scale,
+        isDragging: false
+    };
+
+    function updateStateFromControls() {
+        state.mirrorType = concaveRadio.checked ? 'concave' : 'convex';
+        state.focalLength = parseInt(focalLengthSlider.value);
+        state.objectHeight = parseInt(objectHeightSlider.value);
+    }
+    
+    function drawArrow(x, y, height, color, isDashed = false) {
+        ctx.beginPath();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 3;
+        if (isDashed) {
+            ctx.setLineDash([5, 5]);
+        }
+        ctx.moveTo(x, y);
+        ctx.lineTo(x, y - height);
+        ctx.stroke();
+        ctx.moveTo(x, y - height);
+        ctx.lineTo(x - 6, y - height + 12);
+        ctx.moveTo(x, y - height);
+        ctx.lineTo(x + 6, y - height + 12);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.lineWidth = 1;
+    }
+
+    function drawMirror() {
+        ctx.beginPath();
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#333';
+        
+        const angle = Math.asin(mirrorHeight / mirrorRadius);
+        let centerX, startAngle, endAngle;
+
+        if (state.mirrorType === 'concave') {
+            centerX = poleX + mirrorRadius;
+            startAngle = Math.PI - angle;
+            endAngle = Math.PI + angle;
+            ctx.arc(centerX, axisY, mirrorRadius, startAngle, endAngle);
+        } else {
+            centerX = poleX - mirrorRadius;
+            startAngle = -angle;
+            endAngle = angle;
+            ctx.arc(centerX, axisY, mirrorRadius, startAngle, endAngle);
+        }
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = '#999';
+        const hatchLength = 10;
+        const numHatches = 20;
+
+        for (let i = 0; i <= numHatches; i++) {
+            const currentAngle = startAngle + (i / numHatches) * (endAngle - startAngle);
+            const startX = centerX + mirrorRadius * Math.cos(currentAngle);
+            const startY = axisY + mirrorRadius * Math.sin(currentAngle);
+            const dirX = Math.cos(currentAngle);
+            const dirY = Math.sin(currentAngle);
+            let endX, endY;
+            if (state.mirrorType === 'concave') {
+                endX = startX + hatchLength * dirX;
+                endY = startY + hatchLength * dirY;
+            } else {
+                endX = startX - hatchLength * dirX;
+                endY = startY - hatchLength * dirY;
+            }
+            ctx.moveTo(startX, startY);
+            ctx.lineTo(endX, endY);
+        }
+        ctx.stroke();
+    }
+
+
+    function drawAxisAndLabels() {
+        ctx.beginPath();
+        ctx.strokeStyle = '#000';
+        ctx.moveTo(0, axisY);
+        ctx.lineTo(canvas.width, axisY);
+        ctx.stroke();
+        ctx.fillStyle = '#000';
+        ctx.font = "14px Arial";
+        ctx.fillText('P', poleX - 15, axisY + 15);
+    }
+    
+    function drawFAndC(f, R) {
+        const fX = poleX - f * scale;
+        const cX = poleX - R * scale;
+        
+        ctx.fillStyle = '#000';
+        ctx.font = "bold 14px Arial";
+        ctx.fillText('F', fX - 5, axisY + 20);
+        ctx.fillText('C', cX - 5, axisY + 20);
+        ctx.beginPath();
+        ctx.arc(fX, axisY, 3, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(cX, axisY, 3, 0, 2 * Math.PI);
+        ctx.fill();
+    }
+
+    function drawRay(x1, y1, x2, y2, color, isDashed = false) {
+        ctx.beginPath();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.5;
+        if (isDashed) ctx.setLineDash([4, 4]);
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+    }
+
+    function drawSimulation() {
+        updateStateFromControls();
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        const f_cm = state.mirrorType === 'concave' ? state.focalLength : -state.focalLength;
+        const R_cm = 2 * f_cm;
+        const ho_cm = state.objectHeight;
+        const ho_px = ho_cm * scale;
+        const u_cm = (poleX - state.objectX) / scale;
+
+        drawAxisAndLabels();
+        drawMirror();
+        drawFAndC(f_cm, R_cm);
+        drawArrow(state.objectX, axisY, ho_px, 'blue');
+        
+        let v_cm, hi_cm, m;
+        if (Math.abs(u_cm - f_cm) < 0.1) {
+            v_cm = Infinity; hi_cm = Infinity; m = Infinity;
+        } else {
+            v_cm = 1 / (1/f_cm - 1/u_cm); m = -v_cm / u_cm; hi_cm = m * ho_cm;
+        }
+
+        const imageX = poleX - (v_cm * scale);
+        const hi_px = hi_cm * scale;
+        if (v_cm !== Infinity) {
+             drawArrow(imageX, axisY, hi_px, 'red', v_cm < 0);
+        }
+       
+        const objectTipY = axisY - ho_px;
+        const fX = poleX - f_cm * scale;
+        if (v_cm !== Infinity) {
+            const imageTipY = axisY - hi_px;
+            drawRay(state.objectX, objectTipY, poleX, objectTipY, 'orange');
+            drawRay(poleX, objectTipY, imageX, imageTipY, 'orange', v_cm < 0);
+            if (v_cm > 0) drawRay(poleX, objectTipY, imageX, imageTipY, 'orange');
+            
+            if(u_cm > f_cm || state.mirrorType === 'convex') {
+                const slope = (objectTipY - axisY) / (state.objectX - fX);
+                const yAtMirror = objectTipY - slope * (state.objectX - poleX);
+                drawRay(state.objectX, objectTipY, poleX, yAtMirror, 'green');
+                drawRay(poleX, yAtMirror, imageX, imageTipY, 'green', v_cm < 0);
+                 if (v_cm > 0) drawRay(poleX, yAtMirror, imageX, imageTipY, 'green');
+            }
+        }
+        
+        focalLengthValueSpan.textContent = state.focalLength;
+        objectHeightValueSpan.textContent = state.objectHeight;
+        resultF.textContent = `${f_cm.toFixed(1)} cm`;
+        resultR.textContent = `${R_cm.toFixed(1)} cm`;
+        resultU.textContent = `${u_cm.toFixed(1)} cm`;
+        resultHo.textContent = `${ho_cm.toFixed(1)} cm`;
+        
+        if (v_cm === Infinity) {
+            resultV.textContent = "Infinity"; resultHi.textContent = "Infinity"; resultM.textContent = "Infinity";
+            natureDiv.innerHTML = "Image is formed at infinity.";
+        } else {
+            resultV.textContent = `${v_cm.toFixed(1)} cm`; resultHi.textContent = `${hi_cm.toFixed(1)} cm`; resultM.textContent = m.toFixed(2);
+            let natureText = `${v_cm > 0 ? 'Real' : 'Virtual'}, ${m < 0 ? 'Inverted' : 'Erect'}, `;
+            if (Math.abs(m) > 1.05) natureText += 'Magnified';
+            else if (Math.abs(m) < 0.95) natureText += 'Diminished';
+            else natureText += 'Same Size';
+            natureDiv.innerHTML = natureText;
+        }
+    }
+
+    // Event Listeners
+    [focalLengthSlider, objectHeightSlider, concaveRadio, convexRadio].forEach(el => el.addEventListener('input', drawSimulation));
+
+    canvas.addEventListener('mousedown', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+        if (Math.abs(mouseX - state.objectX) < 15 && mouseY > (axisY - (state.objectHeight * scale)) && mouseY < axisY) {
+            state.isDragging = true;
+            canvas.style.cursor = 'grabbing';
+        }
+    });
+    canvas.addEventListener('mouseup', () => { state.isDragging = false; canvas.style.cursor = 'grab'; });
+    canvas.addEventListener('mouseleave', () => { state.isDragging = false; canvas.style.cursor = 'grab'; });
+    canvas.addEventListener('mousemove', (e) => {
+        if (state.isDragging) {
+            const rect = canvas.getBoundingClientRect();
+            state.objectX = e.clientX - rect.left;
+            drawSimulation();
+        }
+    });
+
+    drawSimulation();
+});
+</script>
+
+</body>
+</html>
