@@ -189,15 +189,15 @@ const Index = () => {
           <div className="flex flex-wrap justify-center items-center gap-8 text-lg text-gray-400">
             <div className="flex items-center backdrop-blur-sm bg-white/5 px-4 py-2 rounded-full">
               <div className="w-3 h-3 bg-green-400 rounded-full mr-3 animate-pulse"></div>
-              10,000+ Active Students
+              100+ Learning Materials
             </div>
             <div className="flex items-center backdrop-blur-sm bg-white/5 px-4 py-2 rounded-full">
               <div className="w-3 h-3 bg-blue-400 rounded-full mr-3 animate-pulse"></div>
-              500+ Schools
+              5 Boards
             </div>
             <div className="flex items-center backdrop-blur-sm bg-white/5 px-4 py-2 rounded-full">
               <div className="w-3 h-3 bg-purple-400 rounded-full mr-3 animate-pulse"></div>
-              98% Success Rate
+              98% Accurate AI
             </div>
           </div>
         </div>
