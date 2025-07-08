@@ -129,6 +129,7 @@ export default function Physics() {
           {chapters.map((chapter) => (
             <Card key={chapter.physic_chapter_id} className="bg-white/10 backdrop-blur-xl border-white/20 hover:bg-white/15 transition-all cursor-pointer">
               <CardHeader>
+                <div className="text-sm text-purple-300 mb-2">Chapter {chapter.physic_chapter_id}</div>
                 <CardTitle className="text-white text-lg">{chapter.chapter}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -142,10 +143,7 @@ export default function Physics() {
                   </div>
                 )}
                 
-                <div className="flex justify-between items-center pt-2">
-                  <div className="text-sm text-gray-400">
-                    Chapter {chapter.physic_chapter_id}
-                  </div>
+                <div className="flex justify-end items-center pt-2">
                   <Button 
                     size="sm" 
                     className="bg-gradient-primary hover:shadow-glow transition-all duration-300"
