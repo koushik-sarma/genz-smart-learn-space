@@ -265,18 +265,34 @@ export default function PhysicsChapter() {
           </TabsContent>
 
           <TabsContent value="simulation" className="mt-6">
-            <Card className="bg-white/10 backdrop-blur-xl border-white/20 text-center py-12">
-              <CardContent>
-                <Zap className="h-16 w-16 text-purple-300 mx-auto mb-4" />
-                <div className="text-white text-lg mb-2">Interactive Simulation</div>
-                <div className="text-gray-300 mb-4">
-                  Explore {chapter.chapter} through interactive simulations
-                </div>
-                <Button className="bg-gradient-primary hover:shadow-glow transition-all duration-300">
-                  Launch Simulation
-                </Button>
-              </CardContent>
-            </Card>
+            {chapter.physic_chapter_id === 1 ? (
+              <Card className="bg-white/10 backdrop-blur-xl border-white/20 overflow-hidden">
+                <CardHeader>
+                  <CardTitle className="text-white">Reflection Simulation</CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <iframe
+                    src="/reflection-simulation.html"
+                    className="w-full h-[600px] border-0 rounded-b-lg"
+                    title="Reflection of Light Simulation"
+                    style={{ minHeight: '600px' }}
+                  />
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="bg-white/10 backdrop-blur-xl border-white/20 text-center py-12">
+                <CardContent>
+                  <Zap className="h-16 w-16 text-purple-300 mx-auto mb-4" />
+                  <div className="text-white text-lg mb-2">Interactive Simulation</div>
+                  <div className="text-gray-300 mb-4">
+                    Explore {chapter.chapter} through interactive simulations
+                  </div>
+                  <Button className="bg-gradient-primary hover:shadow-glow transition-all duration-300">
+                    Launch Simulation
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
         </Tabs>
       </div>
