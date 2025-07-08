@@ -1,0 +1,185 @@
+import { useState, useEffect } from 'react';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { ArrowLeft, BookOpen } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
+
+interface PhysicsChapter {
+  physic_chapter_id: number;
+  chapter: string;
+  chapter_description: string;
+  part: string | null;
+  class: number;
+  board_id: number;
+  subject_id: number;
+}
+
+export default function Physics() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [chapters, setChapters] = useState<PhysicsChapter[]>([]);
+  const [profile, setProfile] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (user) {
+      fetchPhysicsData();
+    }
+  }, [user]);
+
+  const fetchPhysicsData = async () => {
+    if (!user) return;
+
+    try {
+      // First fetch user profile to get class and board
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (profileError) throw profileError;
+      setProfile(profileData);
+
+      // Get the board_id based on board name
+      const { data: boardData, error: boardError } = await supabase
+        .from('dim_boards')
+        .select('board_id')
+        .eq('board_name', profileData.board_of_education)
+        .single();
+
+      if (boardError) throw boardError;
+
+      // Get the subject_id for Physics
+      const { data: subjectData, error: subjectError } = await supabase
+        .from('dim_subjects')
+        .select('subject_id')
+        .eq('subject_name', 'Physics')
+        .eq('class', parseInt(profileData.class))
+        .eq('board_name', profileData.board_of_education)
+        .single();
+
+      if (subjectError) throw subjectError;
+
+      // Fetch physics chapters based on user's class, board, and subject
+      const { data: chaptersData, error: chaptersError } = await supabase
+        .from('dim_physics_subject')
+        .select('*')
+        .eq('class', parseInt(profileData.class))
+        .eq('board_id', boardData.board_id)
+        .eq('subject_id', subjectData.subject_id)
+        .order('physic_chapter_id');
+
+      if (chaptersError) throw chaptersError;
+      setChapters(chaptersData || []);
+
+    } catch (error: any) {
+      toast({
+        title: "Error loading physics chapters",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+        <div className="text-white text-lg">Loading physics chapters...</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      <div className="absolute inset-0 bg-gradient-hero opacity-40 animate-gradient bg-[length:400%_400%]"></div>
+      
+      <div className="relative z-10 p-6">
+        {/* Header */}
+        <div className="flex items-center gap-4 mb-8">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => navigate('/dashboard')}
+            className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Dashboard
+          </Button>
+          
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-gradient-primary rounded-xl shadow-glow">
+              <BookOpen className="h-8 w-8 text-white" />
+            </div>
+            <div className="text-white">
+              <h1 className="text-3xl font-bold">Physics</h1>
+              <p className="text-gray-300">Class {profile?.class} • {profile?.board_of_education}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Chapters Table */}
+        <Card className="bg-white/10 backdrop-blur-xl border-white/20">
+          <CardHeader>
+            <CardTitle className="text-white text-xl">Physics Chapters</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {chapters.length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-white/20 hover:bg-white/5">
+                    <TableHead className="text-gray-300">Chapter</TableHead>
+                    <TableHead className="text-gray-300">Description</TableHead>
+                    {chapters.some(ch => ch.part) && (
+                      <TableHead className="text-gray-300">Part</TableHead>
+                    )}
+                    <TableHead className="text-gray-300">Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {chapters.map((chapter) => (
+                    <TableRow key={chapter.physic_chapter_id} className="border-white/20 hover:bg-white/5">
+                      <TableCell className="text-white font-medium">
+                        {chapter.chapter}
+                      </TableCell>
+                      <TableCell className="text-gray-300">
+                        {chapter.chapter_description}
+                      </TableCell>
+                      {chapters.some(ch => ch.part) && (
+                        <TableCell className="text-gray-300">
+                          {chapter.part || '-'}
+                        </TableCell>
+                      )}
+                      <TableCell>
+                        <Button 
+                          size="sm"
+                          className="bg-gradient-primary hover:shadow-glow transition-all duration-300"
+                        >
+                          Start Learning
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <div className="text-center py-12">
+                <div className="text-white text-lg mb-2">No chapters found</div>
+                <div className="text-gray-300">
+                  Physics chapters for your class and board will appear here once they're available.
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}

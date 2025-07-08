@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Edit } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface Subject {
   subject_id: number;
@@ -26,6 +27,7 @@ interface UserProgress {
 
 export default function Dashboard() {
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [userProgress, setUserProgress] = useState<UserProgress[]>([]);
   const [profile, setProfile] = useState<any>(null);
@@ -361,6 +363,11 @@ export default function Dashboard() {
                     <Button 
                       size="sm" 
                       className="bg-gradient-primary hover:shadow-glow transition-all duration-300"
+                      onClick={() => {
+                        if (subject.subject_name === 'Physics') {
+                          navigate('/physics');
+                        }
+                      }}
                     >
                       {progressPercentage === 0 ? 'Start Learning' : 'Continue'}
                     </Button>
