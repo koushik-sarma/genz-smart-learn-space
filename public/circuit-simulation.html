@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Circuit Construction Kit</title>
+    <style>
+        /* --- Basic Styling & Layout --- */
+        :root {
+            --bg-color: #f4f7f6;
+            --panel-bg: #ffffff;
+            --primary-text: #333;
+            --secondary-text: #555;
+            --border-color: #dce3e1;
+            --accent-color: #007bff;
+            --accent-hover: #0056b3;
+            --bulb-off-glow: rgba(200, 200, 200, 0.7);
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--primary-text);
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            background-color: var(--panel-bg);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+        header {
+            padding: 20px;
+            background-color: var(--accent-color);
+            color: white;
+            text-align: center;
+        }
+        header h1 { margin: 0; }
+        .main-content {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        /* --- Toolbox --- */
+        .toolbox {
+            width: 220px;
+            padding: 20px;
+            border-right: 1px solid var(--border-color);
+        }
+        .toolbox h2 {
+            margin-top: 0;
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 10px;
+        }
+        .toolbox button {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 10px;
+            border: 1px solid var(--border-color);
+            background-color: #fff;
+            color: var(--primary-text);
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: left;
+            font-size: 1em;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        .toolbox button:hover {
+            background-color: #e9ecef;
+        }
+        .toolbox button#simulate-btn {
+            background-color: var(--accent-color);
+            color: white;
+            font-weight: bold;
+        }
+        .toolbox button#simulate-btn:hover {
+            background-color: var(--accent-hover);
+        }
+        .toolbox button#reset-btn {
+            background-color: #6c757d;
+            color: white;
+        }
+        .connection-type { margin: 20px 0; }
+        .connection-type label { margin-right: 15px; cursor: pointer; }
+
+        /* --- Circuit & Results Area --- */
+        .simulation-area {
+            flex-grow: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+        .circuit-display {
+            flex-grow: 1;
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            background-color: #fafafa;
+            min-height: 250px;
+            display: flex;
+            flex-wrap: wrap;
+            align-content: flex-start;
+            gap: 15px;
+        }
+        .results-panel {
+            margin-top: 20px;
+        }
+        .results-panel h3 { margin: 0 0 10px 0; }
+        #results-output {
+            background-color: #2d333b;
+            color: #cdd9e5;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: "Courier New", Courier, monospace;
+            white-space: pre-wrap;
+            min-height: 100px;
+        }
+
+        /* --- Component Visuals --- */
+        .component {
+            width: 100px;
+            height: 100px;
+            border: 1px solid #999;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 5px;
+            font-size: 0.9em;
+            position: relative;
+            cursor: pointer;
+            user-select: none;
+            transition: box-shadow 0.3s ease;
+        }
+        .component-icon { font-size: 2em; }
+        .component-label { font-weight: bold; margin-top: 5px; }
+        .component-value { font-size: 0.8em; color: var(--secondary-text); }
+        .battery { background-color: #ffd700; border-color: #cca300; }
+        .resistor { background-color: #add8e6; border-color: #87ceeb; }
+        .light-bulb { background-color: #e0e0e0; border-color: #bdbdbd; }
+        .switch.open { background-color: #ff8a80; border-color: #d32f2f; }
+        .switch.closed { background-color: #b9f6ca; border-color: #4caf50; }
+        .light-bulb {
+            box-shadow: 0 0 20px var(--bulb-glow-color, var(--bulb-off-glow));
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Chapter 9: Virtual Circuit Construction Kit</h1>
+        </header>
+        <div class="main-content">
+            <div class="toolbox">
+                <h2>Toolbox</h2>
+                <button id="add-battery">🔋 Add Battery</button>
+                <button id="add-resistor">⚡ Add Resistor</button>
+                <button id="add-bulb">💡 Add Light Bulb</button>
+                <button id="add-switch">🕹️ Add Switch</button>
+                
+                <div class="connection-type">
+                    <h3>Connection</h3>
+                    <label><input type="radio" name="connectionType" value="series" checked> Series</label>
+                    <label><input type="radio" name="connectionType" value="parallel"> Parallel</label>
+                </div>
+                
+                <button id="simulate-btn">Simulate Circuit</button>
+                <button id="reset-btn">Reset Circuit</button>
+            </div>
+            
+            <div class="simulation-area">
+                <h3>Circuit Diagram</h3>
+                <div id="circuit-display" class="circuit-display">
+                    <!-- Components will be added here by JavaScript -->
+                </div>
+                <div class="results-panel">
+                    <h3>Simulation Readouts</h3>
+                    <pre id="results-output">Add components and click 'Simulate' to see the results.</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- CORE SIMULATION LOGIC (JavaScript implementation) ---
+        let componentIdCounter = 0;
+        let circuitComponents = [];
+
+        // Base class for all components
+        class Component {
+            constructor(name) {
+                this.name = name;
+                this.id = componentIdCounter++;
+                this.voltageDrop = 0;
+                this.current = 0;
+            }
+            get resistance() {
+                throw new Error("Subclasses must implement the resistance property.");
+            }
+        }
+
+        class Battery extends Component {
+            constructor(name, voltage) {
+                super(name);
+                this.voltage = parseFloat(voltage);
+            }
+            get resistance() { return 0; } // Ideal battery
+        }
+
+        class Resistor extends Component {
+            constructor(name, resistanceOhms) {
+                super(name);
+                this._resistance = parseFloat(resistanceOhms);
+                if (this._resistance <= 0) throw new Error("Resistance must be positive.");
+            }
+            get resistance() { return this._resistance; }
+        }
+
+        class LightBulb extends Resistor {
+            constructor(name, resistanceOhms) {
+                super(name, resistanceOhms);
+            }
+            get power() {
+                return this.current ** 2 * this.resistance;
+            }
+            getBrightness() {
+                if (this.power < 0.1) return { label: "Off", color: "rgba(200, 200, 200, 0.7)" };
+                if (this.power < 10) return { label: "Dim", color: "rgba(255, 255, 0, 0.6)" };
+                if (this.power < 50) return { label: "Medium", color: "rgba(255, 215, 0, 0.8)" };
+                if (this.power < 150) return { label: "Bright", color: "rgba(255, 165, 0, 1.0)" };
+                return { label: "Very Bright!", color: "rgba(255, 140, 0, 1.0)" };
+            }
+        }
+
+        class Switch extends Component {
+            constructor(name) {
+                super(name);
+                this.isOpen = true;
+            }
+            toggle() {
+                this.isOpen = !this.isOpen;
+            }
+            get resistance() {
+                return this.isOpen ? Infinity : 0;
+            }
+        }
+        
+        // --- UI & DOM MANIPULATION ---
+        const addBatteryBtn = document.getElementById('add-battery');
+        const addResistorBtn = document.getElementById('add-resistor');
+        const addBulbBtn = document.getElementById('add-bulb');
+        const addSwitchBtn = document.getElementById('add-switch');
+        const simulateBtn = document.getElementById('simulate-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const circuitDisplay = document.getElementById('circuit-display');
+        const resultsOutput = document.getElementById('results-output');
+
+        // Event Listeners
+        addBatteryBtn.addEventListener('click', () => {
+            const voltage = prompt("Enter Battery Voltage (V):", "12");
+            if (voltage && !isNaN(voltage) && parseFloat(voltage) > 0) {
+                circuitComponents.push(new Battery(`${voltage}V Battery`, voltage));
+                renderCircuit();
+            } else if (voltage !== null) {
+                alert("Please enter a valid positive number for voltage.");
+            }
+        });
+
+        addResistorBtn.addEventListener('click', () => {
+            const resistance = prompt("Enter Resistance (Ω):", "100");
+            if (resistance && !isNaN(resistance) && parseFloat(resistance) > 0) {
+                circuitComponents.push(new Resistor(`${resistance}Ω Resistor`, resistance));
+                renderCircuit();
+            } else if (resistance !== null) {
+                alert("Please enter a valid positive number for resistance.");
+            }
+        });
+
+        addBulbBtn.addEventListener('click', () => {
+            const resistance = prompt("Enter Bulb Resistance (Ω):", "25");
+            if (resistance && !isNaN(resistance) && parseFloat(resistance) > 0) {
+                circuitComponents.push(new LightBulb(`${resistance}Ω Bulb`, resistance));
+                renderCircuit();
+            } else if (resistance !== null) {
+                alert("Please enter a valid positive number for resistance.");
+            }
+        });
+        
+        addSwitchBtn.addEventListener('click', () => {
+            circuitComponents.push(new Switch("Switch"));
+            renderCircuit();
+        });
+
+        resetBtn.addEventListener('click', () => {
+            circuitComponents = [];
+            componentIdCounter = 0;
+            resultsOutput.textContent = "Add components and click 'Simulate' to see the results.";
+            renderCircuit();
+        });
+
+        simulateBtn.addEventListener('click', simulateCircuit);
+
+        function renderCircuit() {
+            circuitDisplay.innerHTML = ''; // Clear previous state
+            if (circuitComponents.length === 0) {
+                circuitDisplay.innerHTML = '<p style="color: #999; width: 100%; text-align: center;">Your circuit is empty. Add components from the toolbox.</p>';
+            }
+            
+            circuitComponents.forEach(comp => {
+                const compDiv = document.createElement('div');
+                compDiv.classList.add('component');
+                compDiv.dataset.id = comp.id;
+
+                let icon = '';
+                let valueText = '';
+                
+                if (comp instanceof Battery) {
+                    compDiv.classList.add('battery');
+                    icon = '🔋';
+                    valueText = `${comp.voltage} V`;
+                } else if (comp instanceof LightBulb) {
+                    compDiv.classList.add('light-bulb');
+                    icon = '💡';
+                    valueText = `${comp.resistance} Ω`;
+                    const brightness = comp.getBrightness();
+                    compDiv.style.setProperty('--bulb-glow-color', brightness.color);
+                } else if (comp instanceof Resistor) {
+                    compDiv.classList.add('resistor');
+                    icon = '⚡';
+                    valueText = `${comp.resistance} Ω`;
+                } else if (comp instanceof Switch) {
+                    compDiv.classList.add('switch');
+                    compDiv.classList.toggle('open', comp.isOpen);
+                    compDiv.classList.toggle('closed', !comp.isOpen);
+                    icon = '🕹️';
+                    valueText = comp.isOpen ? 'OPEN' : 'CLOSED';
+                    compDiv.addEventListener('click', () => {
+                        comp.toggle();
+                        renderCircuit(); // Re-render to show state change
+                    });
+                }
+                
+                compDiv.innerHTML = `
+                    <div class="component-icon">${icon}</div>
+                    <div class="component-label">${comp.constructor.name}</div>
+                    <div class="component-value">${valueText}</div>
+                `;
+                circuitDisplay.appendChild(compDiv);
+            });
+        }
+        
+        function simulateCircuit() {
+            const battery = circuitComponents.find(c => c instanceof Battery);
+            if (!battery) {
+                alert("Cannot simulate: No battery in the circuit!");
+                return;
+            }
+
+            const connectionType = document.querySelector('input[name="connectionType"]:checked').value;
+            const loadComponents = circuitComponents.filter(c => !(c instanceof Battery));
+            
+            let totalResistance = 0;
+            
+            // Calculate Total Equivalent Resistance
+            if (connectionType === 'series') {
+                totalResistance = loadComponents.reduce((sum, comp) => sum + comp.resistance, 0);
+            } else { // Parallel
+                let inverseSum = 0;
+                const parallelLoad = loadComponents.filter(c => c.resistance > 0);
+                if (parallelLoad.some(c => c.resistance === 0)) { // Short circuit
+                    totalResistance = 0;
+                } else {
+                    inverseSum = parallelLoad.reduce((sum, comp) => sum + (1 / comp.resistance), 0);
+                    totalResistance = inverseSum > 0 ? 1 / inverseSum : Infinity;
+                }
+            }
+
+            // Calculate Total Current (Ohm's Law: I = V/R)
+            const totalCurrent = isFinite(totalResistance) && totalResistance > 0 ? battery.voltage / totalResistance : 0;
+            if (totalResistance === 0 && loadComponents.length > 0) {
+                 // Represents a short circuit, huge current
+                 totalCurrent = Infinity;
+            }
+            
+            // Update each component's state
+            circuitComponents.forEach(comp => {
+                if (comp instanceof Battery) {
+                    comp.current = totalCurrent;
+                    comp.voltageDrop = 0;
+                } else {
+                    if (connectionType === 'series') {
+                        comp.current = totalCurrent;
+                        comp.voltageDrop = comp.current * comp.resistance;
+                    } else { // Parallel
+                        comp.voltageDrop = battery.voltage;
+                        // For open switches or infinite resistors
+                        if (!isFinite(comp.resistance)) {
+                            comp.current = 0;
+                        } else if (comp.resistance === 0) {
+                            // In a simple model, we can't determine current in one of many shorted paths
+                            // We'll assign Infinity to signify a problem
+                            comp.current = Infinity; 
+                        } else {
+                            comp.current = comp.voltageDrop / comp.resistance;
+                        }
+                    }
+                }
+                // Handle infinite values for display
+                if (!isFinite(comp.current)) comp.current = Infinity;
+                if (!isFinite(comp.voltageDrop)) comp.voltageDrop = 0;
+
+            });
+            
+            // Display Results
+            let output = `--- ${connectionType.toUpperCase()} CIRCUIT SIMULATION ---\n\n`;
+            output += `Battery Voltage:         ${battery.voltage.toFixed(2)} V\n`;
+            output += `Total Resistance:        ${isFinite(totalResistance) ? totalResistance.toFixed(2) : 'Infinity'} Ω\n`;
+            output += `Total Current from Battery: ${isFinite(totalCurrent) ? totalCurrent.toFixed(3) : 'Infinity (Short Circuit!)'} A\n\n`;
+            output += `--- COMPONENT STATES ---\n`;
+            
+            loadComponents.forEach(comp => {
+                output += `${comp.name.padEnd(15)} | R=${(isFinite(comp.resistance) ? comp.resistance.toFixed(1) : 'Inf').padEnd(6)}Ω | I=${comp.current.toFixed(3)} A | Vdrop=${comp.voltageDrop.toFixed(2)} V`;
+                if (comp instanceof LightBulb) {
+                    output += ` | Power: ${comp.power.toFixed(2)}W (${comp.getBrightness().label})`;
+                }
+                if (comp instanceof Switch) {
+                     output += ` | State: ${comp.isOpen ? 'OPEN' : 'CLOSED'}`;
+                }
+                output += '\n';
+            });
+            
+            resultsOutput.textContent = output;
+            
+            // Re-render to update visuals like bulb brightness
+            renderCircuit();
+        }
+
+        // Initial render on page load
+        renderCircuit();
+
+    </script>
+</body>
+</html>
