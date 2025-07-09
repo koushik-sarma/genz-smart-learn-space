@@ -327,6 +327,38 @@ export default function PhysicsChapter() {
                   />
                 </CardContent>
               </Card>
+            ) : (chapter.chapter.toLowerCase().includes('electromagnetism') || 
+                 chapter.chapter.toLowerCase().includes('electromagnetic') || 
+                 chapter.chapter.toLowerCase().includes('magnet')) ? (
+              <Card className="bg-white/10 backdrop-blur-xl border-white/20 overflow-hidden">
+                <CardHeader>
+                  <CardTitle className="text-white">Electromagnetism Simulation</CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <iframe
+                    src="/Electromagnetism.html"
+                    className="w-full h-[600px] border-0 rounded-b-lg"
+                    title="Electromagnetism Simulation"
+                    style={{ minHeight: '600px' }}
+                  />
+                </CardContent>
+              </Card>
+            ) : (chapter.chapter.toLowerCase().includes('structure of atom') || 
+                 chapter.chapter.toLowerCase().includes('atomic structure') || 
+                 chapter.chapter.toLowerCase().includes('atom')) ? (
+              <Card className="bg-white/10 backdrop-blur-xl border-white/20 overflow-hidden">
+                <CardHeader>
+                  <CardTitle className="text-white">Structure of Atom Simulation</CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <iframe
+                    src="/Structure-of-atom.html"
+                    className="w-full h-[600px] border-0 rounded-b-lg"
+                    title="Structure of Atom Simulation"
+                    style={{ minHeight: '600px' }}
+                  />
+                </CardContent>
+              </Card>
             ) : (
               <Card className="bg-white/10 backdrop-blur-xl border-white/20 text-center py-12">
                 <CardContent>
