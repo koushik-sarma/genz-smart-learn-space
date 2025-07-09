@@ -8,8 +8,6 @@ import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 import Physics from "./pages/Physics";
 import PhysicsChapter from "./pages/PhysicsChapter";
-import Chemistry from "./pages/Chemistry";
-import ChemistryChapter from "./pages/ChemistryChapter";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,8 +24,6 @@ const App = () => (
           <Route path="/login" element={<Login />} />
           <Route path="/physics" element={<Physics />} />
           <Route path="/physics/chapter/:chapterId" element={<PhysicsChapter />} />
-          <Route path="/chemistry" element={<Chemistry />} />
-          <Route path="/chemistry/chapter/:chapterId" element={<ChemistryChapter />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

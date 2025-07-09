@@ -32,48 +32,6 @@ export type Database = {
         }
         Relationships: []
       }
-      dim_chemistry_chapters_notes: {
-        Row: {
-          board_id: number
-          chapter_chemical_equation: string
-          chapter_chemical_formulae: string
-          chapter_discussion_points: string
-          chapter_id: number
-          chapter_important_diagrams: string
-          chapter_quick_recall: string
-          chapter_summary: string
-          chapter_takeaways: string
-          chemistry_notes_id: number
-          subject_id: number
-        }
-        Insert: {
-          board_id: number
-          chapter_chemical_equation: string
-          chapter_chemical_formulae: string
-          chapter_discussion_points: string
-          chapter_id: number
-          chapter_important_diagrams: string
-          chapter_quick_recall: string
-          chapter_summary: string
-          chapter_takeaways: string
-          chemistry_notes_id?: number
-          subject_id: number
-        }
-        Update: {
-          board_id?: number
-          chapter_chemical_equation?: string
-          chapter_chemical_formulae?: string
-          chapter_discussion_points?: string
-          chapter_id?: number
-          chapter_important_diagrams?: string
-          chapter_quick_recall?: string
-          chapter_summary?: string
-          chapter_takeaways?: string
-          chemistry_notes_id?: number
-          subject_id?: number
-        }
-        Relationships: []
-      }
       dim_chemistry_subject: {
         Row: {
           board_id: number

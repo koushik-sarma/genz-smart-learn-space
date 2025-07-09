@@ -366,8 +366,6 @@ export default function Dashboard() {
                       onClick={() => {
                         if (subject.subject_name === 'Physics') {
                           navigate('/physics');
-                        } else if (subject.subject_name === 'Chemistry') {
-                          navigate('/chemistry');
                         }
                       }}
                     >
