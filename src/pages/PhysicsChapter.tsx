@@ -279,6 +279,20 @@ export default function PhysicsChapter() {
                   />
                 </CardContent>
               </Card>
+            ) : chapter.chapter.toLowerCase().includes('refraction') ? (
+              <Card className="bg-white/10 backdrop-blur-xl border-white/20 overflow-hidden">
+                <CardHeader>
+                  <CardTitle className="text-white">Refraction Simulation</CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <iframe
+                    src="/refraction-simulation.html"
+                    className="w-full h-[600px] border-0 rounded-b-lg"
+                    title="Refraction of Light Simulation"
+                    style={{ minHeight: '600px' }}
+                  />
+                </CardContent>
+              </Card>
             ) : (
               <Card className="bg-white/10 backdrop-blur-xl border-white/20 text-center py-12">
                 <CardContent>
