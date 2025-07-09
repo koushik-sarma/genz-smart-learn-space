@@ -293,6 +293,40 @@ export default function PhysicsChapter() {
                   />
                 </CardContent>
               </Card>
+            ) : (chapter.chapter.toLowerCase().includes('human eye') || 
+                 chapter.chapter.toLowerCase().includes('eye') || 
+                 chapter.chapter.toLowerCase().includes('light') ||
+                 chapter.chapter.toLowerCase().includes('colorful world')) ? (
+              <Card className="bg-white/10 backdrop-blur-xl border-white/20 overflow-hidden">
+                <CardHeader>
+                  <CardTitle className="text-white">Human Eye and Light Simulation</CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <iframe
+                    src="/human-eye-and-light.html"
+                    className="w-full h-[600px] border-0 rounded-b-lg"
+                    title="Human Eye and Light Simulation"
+                    style={{ minHeight: '600px' }}
+                  />
+                </CardContent>
+              </Card>
+            ) : (chapter.chapter.toLowerCase().includes('electric') || 
+                 chapter.chapter.toLowerCase().includes('current') || 
+                 chapter.chapter.toLowerCase().includes('circuit') ||
+                 chapter.chapter.toLowerCase().includes('electricity')) ? (
+              <Card className="bg-white/10 backdrop-blur-xl border-white/20 overflow-hidden">
+                <CardHeader>
+                  <CardTitle className="text-white">Electric Circuit Simulation</CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <iframe
+                    src="/circuit-simulation.html"
+                    className="w-full h-[600px] border-0 rounded-b-lg"
+                    title="Electric Circuit Simulation"
+                    style={{ minHeight: '600px' }}
+                  />
+                </CardContent>
+              </Card>
             ) : (
               <Card className="bg-white/10 backdrop-blur-xl border-white/20 text-center py-12">
                 <CardContent>
