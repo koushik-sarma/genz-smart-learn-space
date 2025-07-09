@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Human Eye Defect & Correction Simulator</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            background-color: #f0f2f5;
+            color: #333;
+            margin: 0;
+            min-height: 100vh;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 900px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+            padding: 25px;
+        }
+        h1 {
+            margin-top: 0;
+            color: #0056b3;
+        }
+        .controls {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .controls button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            border-radius: 6px;
+            background-color: #f8f9fa;
+            color: #495057;
+            transition: all 0.2s ease-in-out;
+        }
+        .controls button:hover {
+            background-color: #e9ecef;
+        }
+        .controls button.active {
+            border-color: #007bff;
+            background-color: #e7f1ff;
+            color: #0056b3;
+            font-weight: bold;
+        }
+        .simulation-area {
+            position: relative;
+            width: 100%;
+            max-width: 800px; /* Fixed width for canvas */
+        }
+        canvas {
+            background-color: #fdfdfd;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            width: 100%;
+            height: auto;
+        }
+        .explanation {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #eef7ff;
+            border-left: 5px solid #007bff;
+            border-radius: 4px;
+            text-align: center;
+            min-height: 50px;
+        }
+        #correction-button {
+            position: absolute;
+            left: 20px;
+            top: 20px;
+            padding: 8px 16px;
+            font-size: 14px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            display: none; /* Hidden by default */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Eye Defect & Correction Simulator</h1>
+    <div class="controls">
+        <button id="normalBtn" class="active">Normal Vision</button>
+        <button id="myopiaBtn">Myopia (Nearsightedness)</button>
+        <button id="hypermetropiaBtn">Hypermetropia (Farsightedness)</button>
+    </div>
+    
+    <div class="simulation-area">
+        <canvas id="simulationCanvas" width="800" height="400"></canvas>
+        <button id="correction-button">Place Corrective Lens</button>
+    </div>
+
+    <div class="explanation">
+        <p id="explanationText">Rays from the object focus perfectly on the retina, forming a clear image.</p>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const canvas = document.getElementById('simulationCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const normalBtn = document.getElementById('normalBtn');
+    const myopiaBtn = document.getElementById('myopiaBtn');
+    const hypermetropiaBtn = document.getElementById('hypermetropiaBtn');
+    const correctionBtn = document.getElementById('correction-button');
+    const explanationText = document.getElementById('explanationText');
+
+    let state = {
+        mode: 'normal', // 'normal', 'myopia', 'hypermetropia'
+        showCorrection: false
+    };
+
+    // --- Drawing Functions ---
+    const eyeCenter = { x: 650, y: canvas.height / 2 };
+    const eyeRadius = 100;
+    const retinaX = eyeCenter.x - eyeRadius;
+    const corneaRadius = 80;
+    const corneaCenter = { x: eyeCenter.x + eyeRadius - corneaRadius + 15, y: eyeCenter.y };
+
+    function drawEye() {
+        // Main eyeball
+        ctx.beginPath();
+        ctx.arc(eyeCenter.x, eyeCenter.y, eyeRadius, 0, 2 * Math.PI);
+        ctx.fillStyle = '#fff';
+        ctx.fill();
+        ctx.strokeStyle = '#555';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        // Retina
+        ctx.beginPath();
+        ctx.arc(eyeCenter.x, eyeCenter.y, eyeRadius - 3, Math.PI / 2 - 0.8, Math.PI / 2 + 0.8);
+        ctx.strokeStyle = '#e74c3c';
+        ctx.lineWidth = 5;
+        ctx.stroke();
+        ctx.fillStyle = 'red';
+        ctx.font = '12px Arial';
+        ctx.fillText('Retina', retinaX - 40, eyeCenter.y);
+
+        // Cornea/Lens system
+        ctx.beginPath();
+        ctx.arc(corneaCenter.x, corneaCenter.y, corneaRadius, Math.PI - 0.7, Math.PI + 0.7);
+        ctx.fillStyle = '#a9d0f5';
+        ctx.fill();
+        ctx.stroke();
+    }
+
+    function drawObject() {
+        const isDistant = (state.mode === 'normal' || state.mode === 'myopia');
+        const objectX = 50;
+        
+        ctx.fillStyle = '#2c3e50';
+        ctx.font = '16px Arial';
+
+        if (isDistant) {
+            ctx.fillText('Distant Object', objectX, 40);
+            // Draw parallel rays for distant object
+            for (let i = -1; i <= 1; i += 1) {
+                drawRay(0, eyeCenter.y + i * 40, eyeCenter.x - eyeRadius - 15);
+            }
+        } else { // Near object for Hypermetropia
+            ctx.fillText('Near Object', objectX, 40);
+            ctx.beginPath();
+            ctx.arc(objectX, eyeCenter.y, 10, 0, 2 * Math.PI);
+            ctx.fillStyle = '#f39c12';
+            ctx.fill();
+        }
+    }
+    
+    function drawRay(startX, startY, endX, color = '#3498db') {
+        ctx.beginPath();
+        ctx.moveTo(startX, startY);
+        ctx.lineTo(endX, startY);
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    }
+    
+    function drawConvergingRays(focusX, color = '#3498db') {
+        const lensSurfaceX = corneaCenter.x - corneaRadius;
+         for (let i = -1; i <= 1; i += 1) {
+            const startY = eyeCenter.y + i * 40;
+            ctx.beginPath();
+            ctx.moveTo(lensSurfaceX, startY);
+            ctx.lineTo(focusX, eyeCenter.y);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+    }
+    
+    function drawDivergingRays(startPoint, color = '#3498db') {
+        const lensSurfaceX = corneaCenter.x - corneaRadius;
+        for (let i = -1; i <= 1; i+= 0.5) {
+            if(i === 0) continue;
+            const endY = eyeCenter.y + i * 100;
+             ctx.beginPath();
+            ctx.moveTo(startPoint.x, startPoint.y);
+            ctx.lineTo(lensSurfaceX, eyeCenter.y + (lensSurfaceX - startPoint.x) * (endY - startPoint.y) / (lensSurfaceX - startPoint.x));
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+    }
+
+    function drawCorrectiveLens() {
+        const lensX = 350;
+        const lensHeight = 120;
+        ctx.beginPath();
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#9b59b6';
+
+        if(state.mode === 'myopia' && state.showCorrection) { // Concave lens
+            ctx.moveTo(lensX, eyeCenter.y - lensHeight/2);
+            ctx.lineTo(lensX, eyeCenter.y + lensHeight/2);
+            ctx.moveTo(lensX + 8, eyeCenter.y - lensHeight/2 + 8);
+            ctx.lineTo(lensX, eyeCenter.y - lensHeight/2);
+            ctx.lineTo(lensX - 8, eyeCenter.y - lensHeight/2 + 8);
+            ctx.moveTo(lensX + 8, eyeCenter.y + lensHeight/2 - 8);
+            ctx.lineTo(lensX, eyeCenter.y + lensHeight/2);
+            ctx.lineTo(lensX - 8, eyeCenter.y + lensHeight/2 - 8);
+        } else if (state.mode === 'hypermetropia' && state.showCorrection) { // Convex lens
+             ctx.moveTo(lensX, eyeCenter.y - lensHeight/2);
+            ctx.lineTo(lensX, eyeCenter.y + lensHeight/2);
+            ctx.moveTo(lensX - 8, eyeCenter.y - lensHeight/2 + 8);
+            ctx.lineTo(lensX, eyeCenter.y - lensHeight/2);
+            ctx.lineTo(lensX + 8, eyeCenter.y - lensHeight/2 + 8);
+            ctx.moveTo(lensX - 8, eyeCenter.y + lensHeight/2 - 8);
+            ctx.lineTo(lensX, eyeCenter.y + lensHeight/2);
+            ctx.lineTo(lensX + 8, eyeCenter.y + lensHeight/2 - 8);
+        }
+        ctx.stroke();
+    }
+
+
+    function drawSimulation() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawEye();
+        drawObject();
+        
+        let focusX;
+        const lensSurfaceX = corneaCenter.x - corneaRadius;
+        const correctiveLensX = 350;
+
+        if (state.showCorrection) {
+            correctionBtn.style.display = 'none';
+            drawCorrectiveLens();
+        } else {
+            correctionBtn.style.display = (state.mode === 'normal') ? 'none' : 'block';
+        }
+
+        switch (state.mode) {
+            case 'normal':
+                focusX = retinaX;
+                drawConvergingRays(focusX);
+                explanationText.textContent = "Normal Vision: Light from a distant object is focused perfectly on the retina.";
+                break;
+            case 'myopia':
+                focusX = state.showCorrection ? retinaX : retinaX - 50;
+                explanationText.textContent = state.showCorrection ? 
+                    "Correction: A concave lens diverges the light rays, allowing the eye to focus them correctly onto the retina." :
+                    "Myopia: The eye focuses light from distant objects in front of the retina, causing blurry vision.";
+                
+                if (state.showCorrection) {
+                    // Show slight divergence from corrective lens
+                    for (let i = -1; i <= 1; i += 1) {
+                        const startY = eyeCenter.y + i * 40;
+                        drawRay(0, startY, correctiveLensX, '#3498db');
+                        ctx.beginPath();
+                        ctx.moveTo(correctiveLensX, startY);
+                        ctx.lineTo(lensSurfaceX, startY + 10 * i);
+                        ctx.stroke();
+                        ctx.beginPath();
+                        ctx.moveTo(lensSurfaceX, startY + 10 * i);
+                        ctx.lineTo(focusX, eyeCenter.y);
+                        ctx.stroke();
+                    }
+                } else {
+                    drawConvergingRays(focusX, '#c0392b'); // Red for error
+                }
+                break;
+            case 'hypermetropia':
+                focusX = state.showCorrection ? retinaX : retinaX + 50;
+                 explanationText.textContent = state.showCorrection ?
+                    "Correction: A convex lens converges the light rays, helping the eye focus them onto the retina." :
+                    "Hypermetropia: The eye focuses light from near objects behind the retina, causing blurry vision.";
+                
+                const nearObjectPoint = {x: 50, y: eyeCenter.y};
+
+                if(state.showCorrection) {
+                     for (let i = -1; i <= 1; i+= 0.5) {
+                        if(i === 0) continue;
+                        const lensY = eyeCenter.y + i * 50;
+                        const correctiveY = eyeCenter.y + i * 40;
+                        
+                        ctx.beginPath();
+                        ctx.moveTo(nearObjectPoint.x, nearObjectPoint.y);
+                        ctx.lineTo(correctiveLensX, correctiveY);
+                        ctx.stroke();
+                        ctx.beginPath();
+                        ctx.moveTo(correctiveLensX, correctiveY);
+                        ctx.lineTo(lensSurfaceX, lensY);
+                        ctx.stroke();
+                         ctx.beginPath();
+                        ctx.moveTo(lensSurfaceX, lensY);
+                        ctx.lineTo(focusX, eyeCenter.y);
+                        ctx.stroke();
+                    }
+                } else {
+                    drawDivergingRays(nearObjectPoint, '#c0392b'); // Red for error
+                    drawConvergingRays(focusX, '#c0392b');
+                }
+                break;
+        }
+    }
+
+    // --- UI Control Logic ---
+    function setActiveButton(activeBtn) {
+        [normalBtn, myopiaBtn, hypermetropiaBtn].forEach(btn => btn.classList.remove('active'));
+        activeBtn.classList.add('active');
+    }
+
+    normalBtn.addEventListener('click', () => {
+        state.mode = 'normal';
+        state.showCorrection = false;
+        setActiveButton(normalBtn);
+        drawSimulation();
+    });
+
+    myopiaBtn.addEventListener('click', () => {
+        state.mode = 'myopia';
+        state.showCorrection = false;
+        setActiveButton(myopiaBtn);
+        drawSimulation();
+    });
+
+    hypermetropiaBtn.addEventListener('click', () => {
+        state.mode = 'hypermetropia';
+        state.showCorrection = false;
+        setActiveButton(hypermetropiaBtn);
+        drawSimulation();
+    });
+
+    correctionBtn.addEventListener('click', () => {
+        state.showCorrection = true;
+        drawSimulation();
+    });
+
+    // Initial Draw
+    drawSimulation();
+});
+</script>
+
+</body>
+</html>
