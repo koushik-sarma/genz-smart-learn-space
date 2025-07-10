@@ -10,6 +10,8 @@ import Physics from "./pages/Physics";
 import PhysicsChapter from "./pages/PhysicsChapter";
 import Chemistry from "./pages/Chemistry";
 import ChemistryChapter from "./pages/ChemistryChapter";
+import Biology from "./pages/Biology";
+import BiologyChapter from "./pages/BiologyChapter";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +30,8 @@ const App = () => (
           <Route path="/physics/chapter/:chapterId" element={<PhysicsChapter />} />
           <Route path="/chemistry" element={<Chemistry />} />
           <Route path="/chemistry/chapter/:chapterId" element={<ChemistryChapter />} />
+          <Route path="/biology" element={<Biology />} />
+          <Route path="/biology/chapter/:chapterId" element={<BiologyChapter />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
