@@ -9,6 +9,7 @@ interface SimulationTabProps {
 export default function SimulationTab({ chapter }: SimulationTabProps) {
   const simulationMap: Record<string, string> = {
     'Chemical Reactions and Equations': 'chemical-equations.html',
+    'Chemical Equations': 'chemical-equations.html',
     'Acids, Bases and Salts': 'acids-bases.html',
     'Structure of Atom': 'structure-of-atom.html',
     'Classification of Elements - The Periodic Table': 'periodic-table.html',
