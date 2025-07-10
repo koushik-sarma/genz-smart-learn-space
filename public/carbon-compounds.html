@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Molecule Hybridization Viewer</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 25px 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+        }
+        h1 { color: #2c3e50; }
+        .explanation {
+            text-align: left;
+            background-color: #eaf2f8;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            border-left: 5px solid #8e44ad;
+        }
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .control-btn {
+            padding: 10px 20px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            border: 2px solid #bdc3c7;
+            background-color: #fff;
+            color: #34495e;
+            border-radius: 6px;
+            transition: all 0.3s;
+        }
+        .control-btn.active, .control-btn:hover {
+            background-color: #8e44ad;
+            color: white;
+            border-color: #8e44ad;
+        }
+        #simulation-container {
+            position: relative;
+            width: 100%;
+            height: 450px;
+            background: #2c3e50;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        #c { /* The 3D canvas */
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        .label { /* For bond angles */
+            color: #fff;
+            font-family: sans-serif;
+            padding: 5px 10px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 5px;
+            font-size: 1.2em;
+        }
+        /* --- 2D Orbital Animation Overlay --- */
+        #animation-overlay {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.5s;
+        }
+        .orbital {
+            position: absolute;
+            border: 3px solid;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            color: #fff;
+            transition: all 1s ease-in-out;
+        }
+        .s-orbital {
+            width: 80px; height: 80px;
+            border-color: #3498db;
+            border-radius: 50%;
+            background: rgba(52, 152, 219, 0.3);
+        }
+        .p-orbital {
+            width: 50px; height: 120px;
+            border-color: #e67e22;
+            border-radius: 50%;
+            background: rgba(230, 126, 34, 0.3);
+        }
+        .hybrid-orbital {
+            width: 60px; height: 140px;
+            border-color: #9b59b6;
+            background: rgba(155, 89, 182, 0.3);
+            border-radius: 70% 30% 30% 70% / 60% 40% 60% 40%;
+            opacity: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>3D Molecule Shape Viewer</h1>
+        <div class="explanation">
+            <p><strong>Hybridization</strong> is the idea that atomic orbitals mix to form new, identical hybrid orbitals. This process determines the 3D shape of a molecule.</p>
+            <ol>
+                <li>Click a button to select a molecule.</li>
+                <li>Watch the atomic 's' and 'p' orbitals animate and "morph" into hybrid orbitals.</li>
+                <li>Finally, the 3D molecule will appear. <strong>Click and drag with your mouse to rotate it!</strong></li>
+            </ol>
+        </div>
+        <div class="controls">
+            <button class="control-btn" data-molecule="methane">Methane (sp³)</button>
+            <button class="control-btn" data-molecule="ethene">Ethene (sp²)</button>
+            <button class="control-btn" data-molecule="ethyne">Ethyne (sp)</button>
+        </div>
+        <div id="simulation-container">
+            <div id="animation-overlay"></div>
+            <canvas id="c"></canvas>
+        </div>
+    </div>
+
+    <!-- Modern way to import libraries without local files -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+        // --- Basic Setup ---
+        const canvas = document.querySelector('#c');
+        const overlay = document.getElementById('animation-overlay');
+        const renderer = new THREE.WebGLRenderer({ antialias: true, canvas, alpha: true });
+        const labelRenderer = new CSS2DRenderer();
+        labelRenderer.setSize(canvas.clientWidth, canvas.clientHeight);
+        labelRenderer.domElement.style.position = 'absolute';
+        labelRenderer.domElement.style.top = '0px';
+        document.getElementById('simulation-container').appendChild(labelRenderer.domElement);
+
+        const camera = new THREE.PerspectiveCamera(45, canvas.clientWidth / canvas.clientHeight, 0.1, 100);
+        camera.position.z = 15;
+        const scene = new THREE.Scene();
+        const mainGroup = new THREE.Group();
+        scene.add(mainGroup);
+
+        const controls = new OrbitControls(camera, labelRenderer.domElement);
+        controls.enableDamping = true;
+
+        const light = new THREE.AmbientLight(0xffffff, 0.5);
+        scene.add(light);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+        directionalLight.position.set(5, 10, 7.5);
+        scene.add(directionalLight);
+
+        // --- Molecule Data & Builder Functions ---
+        const atomGeo = new THREE.SphereGeometry(0.5, 32, 32);
+        const carbonMat = new THREE.MeshPhongMaterial({ color: 0x222222 });
+        const hydrogenMat = new THREE.MeshPhongMaterial({ color: 0xcccccc });
+
+        function createAtom(pos, material) {
+            const atom = new THREE.Mesh(atomGeo, material);
+            atom.position.copy(pos);
+            mainGroup.add(atom);
+            return atom;
+        }
+
+        function createBond(pos1, pos2, bondCount = 1) {
+            const bondGroup = new THREE.Group();
+            const offsets = [-0.15, 0.15]; // For double/triple bonds
+            
+            for (let i = 0; i < bondCount; i++) {
+                const bondGeo = new THREE.CylinderGeometry(0.1, 0.1, pos1.distanceTo(pos2), 16);
+                const bondMat = new THREE.MeshPhongMaterial({ color: 0x888888 });
+                const bond = new THREE.Mesh(bondGeo, bondMat);
+
+                const bondVector = new THREE.Vector3().subVectors(pos2, pos1);
+                bond.position.copy(pos1).addScaledVector(bondVector, 0.5);
+                bond.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), bondVector.clone().normalize());
+
+                if (bondCount > 1) {
+                    const offsetVec = new THREE.Vector3(0, 0, offsets[i]); // Default z-offset
+                    offsetVec.applyQuaternion(bond.quaternion); // Rotate offset to align with bond
+                    bond.position.add(offsetVec);
+                }
+                bondGroup.add(bond);
+            }
+            mainGroup.add(bondGroup);
+        }
+
+        function createAngleLabel(text, position) {
+            const div = document.createElement('div');
+            div.className = 'label';
+            div.textContent = text;
+            const label = new CSS2DObject(div);
+            label.position.copy(position);
+            mainGroup.add(label);
+        }
+
+        const molecules = {
+            methane: {
+                orbitals: { s: 1, p: 3, hybrid: { count: 4, shape: 'tetrahedral' } },
+                build: () => {
+                    const cPos = new THREE.Vector3(0, 0, 0);
+                    const hPos1 = new THREE.Vector3(0, 1.5, 0);
+                    const hPos2 = new THREE.Vector3(1.41, -0.5, 0);
+                    const hPos3 = new THREE.Vector3(-0.707, -0.5, 1.22);
+                    const hPos4 = new THREE.Vector3(-0.707, -0.5, -1.22);
+                    createAtom(cPos, carbonMat);
+                    createAtom(hPos1, hydrogenMat);
+                    createAtom(hPos2, hydrogenMat);
+                    createAtom(hPos3, hydrogenMat);
+                    createAtom(hPos4, hydrogenMat);
+                    createBond(cPos, hPos1);
+                    createBond(cPos, hPos2);
+                    createBond(cPos, hPos3);
+                    createBond(cPos, hPos4);
+                    createAngleLabel("109.5°", new THREE.Vector3(0.5, 0.5, 0));
+                }
+            },
+            ethene: {
+                orbitals: { s: 1, p: 2, hybrid: { count: 3, shape: 'trigonal' } },
+                build: () => {
+                    const c1 = new THREE.Vector3(-0.7, 0, 0), c2 = new THREE.Vector3(0.7, 0, 0);
+                    const h1 = new THREE.Vector3(-1.25, 1, 0), h2 = new THREE.Vector3(-1.25, -1, 0);
+                    const h3 = new THREE.Vector3(1.25, 1, 0), h4 = new THREE.Vector3(1.25, -1, 0);
+                    createAtom(c1, carbonMat); createAtom(c2, carbonMat);
+                    createAtom(h1, hydrogenMat); createAtom(h2, hydrogenMat);
+                    createAtom(h3, hydrogenMat); createAtom(h4, hydrogenMat);
+                    createBond(c1, c2, 2); // Double bond
+                    createBond(c1, h1); createBond(c1, h2);
+                    createBond(c2, h3); createBond(c2, h4);
+                    createAngleLabel("120°", new THREE.Vector3(-0.6, 0.5, 0));
+                }
+            },
+            ethyne: {
+                orbitals: { s: 1, p: 1, hybrid: { count: 2, shape: 'linear' } },
+                build: () => {
+                    const c1 = new THREE.Vector3(-0.7, 0, 0), c2 = new THREE.Vector3(0.7, 0, 0);
+                    const h1 = new THREE.Vector3(-2, 0, 0), h2 = new THREE.Vector3(2, 0, 0);
+                    createAtom(c1, carbonMat); createAtom(c2, carbonMat);
+                    createAtom(h1, hydrogenMat); createAtom(h2, hydrogenMat);
+                    createBond(c1, c2, 3); // Triple bond
+                    createBond(c1, h1); createBond(c2, h2);
+                    createAngleLabel("180°", new THREE.Vector3(0, 0.3, 0));
+                }
+            }
+        };
+
+        // --- Main Simulation Logic ---
+        function showMolecule(name) {
+            // 1. Reset State
+            mainGroup.clear();
+            overlay.innerHTML = '';
+            overlay.style.opacity = 1;
+            canvas.style.opacity = 0;
+            labelRenderer.domElement.style.opacity = 0;
+            document.querySelectorAll('.control-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector(`[data-molecule="${name}"]`).classList.add('active');
+
+            const recipe = molecules[name];
+            const atomicOrbitals = [];
+
+            // 2. Step 1: Create and show atomic orbitals
+            setTimeout(() => {
+                const s = document.createElement('div');
+                s.className = 'orbital s-orbital';
+                s.textContent = 's';
+                s.style.transform = 'translate(-150px, 0px)';
+                overlay.appendChild(s);
+                atomicOrbitals.push(s);
+
+                for (let i = 0; i < recipe.orbitals.p; i++) {
+                    const p = document.createElement('div');
+                    p.className = 'orbital p-orbital';
+                    p.textContent = 'p';
+                    p.style.transform = `translate(120px, ${-100 + i * 100}px) rotate(${i * 60}deg)`;
+                    overlay.appendChild(p);
+                    atomicOrbitals.push(p);
+                }
+            }, 100);
+
+            // 3. Step 2: Animate morphing
+            setTimeout(() => {
+                atomicOrbitals.forEach(o => {
+                    o.style.transform = 'translate(0, 0) scale(0)';
+                    o.style.opacity = 0;
+                });
+            }, 1500);
+
+            // 4. Step 3: Show hybrid orbitals
+            setTimeout(() => {
+                const hybridRecipe = recipe.orbitals.hybrid;
+                for (let i = 0; i < hybridRecipe.count; i++) {
+                    const h = document.createElement('div');
+                    h.className = 'orbital hybrid-orbital';
+                    h.textContent = 'sp' + (recipe.orbitals.p > 1 ? recipe.orbitals.p : '');
+                    
+                    let angle = 360 / hybridRecipe.count * i;
+                    if (hybridRecipe.shape === 'tetrahedral') angle += 45;
+                    if (hybridRecipe.shape === 'trigonal') angle += 90;
+                    
+                    h.style.transform = `rotate(${angle}deg) translate(0, -90px)`;
+                    overlay.appendChild(h);
+                    
+                    // Force reflow to animate in
+                    requestAnimationFrame(() => {
+                         h.style.opacity = 1;
+                         h.style.transform = `rotate(${angle}deg) translate(0, 0px)`;
+                    });
+                }
+            }, 2500);
+
+            // 5. Step 4: Transition to 3D model
+            setTimeout(() => {
+                overlay.style.opacity = 0;
+                canvas.style.opacity = 1;
+                labelRenderer.domElement.style.opacity = 1;
+                recipe.build();
+            }, 4000);
+        }
+
+        // --- Animation Loop ---
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+
+            // Handle resizing
+            const needResize = canvas.clientWidth !== renderer.domElement.width || canvas.clientHeight !== renderer.domElement.height;
+            if (needResize) {
+                renderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
+                labelRenderer.setSize(canvas.clientWidth, canvas.clientHeight);
+                camera.aspect = canvas.clientWidth / canvas.clientHeight;
+                camera.updateProjectionMatrix();
+            }
+            
+            renderer.render(scene, camera);
+            labelRenderer.render(scene, camera);
+        }
+
+        // --- Initial Load & Event Listeners ---
+        document.querySelectorAll('.control-btn').forEach(btn => {
+            btn.addEventListener('click', () => showMolecule(btn.dataset.molecule));
+        });
+
+        showMolecule('methane'); // Start with methane
+        animate();
+    </script>
+</body>
+</html>
