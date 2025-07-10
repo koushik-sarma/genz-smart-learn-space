@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ore Dressing Simulation</title>
+    <style>
+        /* --- Basic Page Styles --- */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            line-height: 1.6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: #ffffff;
+            padding: 25px 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+        }
+
+        h1 { color: #2c3e50; }
+
+        /* --- Explanation Section --- */
+        .explanation {
+            text-align: left;
+            background-color: #eaf2f8;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            border-left: 5px solid #16a085;
+        }
+
+        /* --- Tab Navigation --- */
+        .tab-nav {
+            display: flex;
+            border-bottom: 2px solid #ddd;
+            margin-bottom: 20px;
+        }
+        .tab-button {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: none;
+            background-color: transparent;
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #7f8c8d;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+        .tab-button.active {
+            color: #2980b9;
+            border-bottom-color: #2980b9;
+        }
+
+        /* --- Simulation Content --- */
+        .simulation-content { display: none; }
+        .simulation-content.active { display: block; }
+        .simulation-canvas {
+            position: relative;
+            height: 350px;
+            background: #fdfdfd;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        .controls { margin-top: 15px; }
+        .controls button {
+            padding: 10px 20px;
+            font-size: 1em;
+            cursor: pointer;
+            border: 2px solid #3498db;
+            color: #3498db;
+            background-color: white;
+            border-radius: 6px;
+            transition: all 0.3s;
+        }
+        .controls button:hover { background-color: #3498db; color: white; }
+
+        /* --- Froth Flotation Specific Styles --- */
+        #froth-flotation-canvas .particle {
+            position: absolute;
+            border-radius: 50%;
+        }
+        .tank {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            height: 80%;
+            border: 5px solid #7f8c8d;
+            border-top: none;
+        }
+        .water { width: 100%; height: 100%; background-color: #aed6f1; opacity: 0.8; }
+        .froth {
+            position: absolute;
+            top: 10%;
+            left: 0;
+            width: 100%;
+            height: 25%;
+            background: #ecf0f1;
+            border-bottom: 3px dashed #bdc3c7;
+        }
+        .ore { background-color: #f1c40f; width: 10px; height: 10px; }
+        .gangue { background-color: #704214; width: 12px; height: 12px; }
+
+        /* --- Magnetic Separation Specific Styles --- */
+        #magnetic-separation-canvas .particle {
+            position: absolute;
+            border-radius: 50%;
+        }
+        .conveyor-belt {
+            position: absolute;
+            background: #34495e;
+            width: 100%;
+            height: 20px;
+            top: 100px;
+            left: 0;
+        }
+        .magnetic-roller {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background: #95a5a6;
+            border-radius: 50%;
+            top: 70px;
+            right: 50px;
+        }
+        .magnetic-roller.active::after {
+            content: '';
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            border: 2px dashed #3498db;
+            border-radius: 50%;
+            top: -20px;
+            left: -20px;
+            animation: rotate 4s linear infinite;
+        }
+        .hopper {
+            position: absolute;
+            top: 20px; left: 60px;
+            width: 0; height: 0;
+            border-left: 30px solid transparent;
+            border-right: 30px solid transparent;
+            border-top: 40px solid #7f8c8d;
+        }
+        .bin {
+            position: absolute;
+            bottom: 10px;
+            width: 150px;
+            height: 80px;
+            border: 3px solid #7f8c8d;
+            border-top: none;
+            background: #e9ecef;
+        }
+        .bin-magnetic { right: 150px; } /* Ends at x=650px */
+        .bin-non-magnetic { right: -30px; } /* Starts at x=680px */
+        .bin-label { font-weight: bold; font-size: 0.9em; margin-top: 5px; color: #34495e; }
+        
+        .magnetic { background-color: #c0392b; width: 10px; height: 10px; }
+        .non-magnetic { background-color: #bdc3c7; width: 10px; height: 10px; }
+
+        /* --- ANIMATIONS --- */
+        @keyframes float-up {
+            from { transform: translateY(0); opacity: 1; }
+            to { transform: translateY(-180px); opacity: 0; }
+        }
+        @keyframes sink-down {
+            from { transform: translateY(0); }
+            to { transform: translateY(30px); }
+        }
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        /**************************************************/
+        /* --- CORRECTED Magnetic Separation Animations --- */
+        /**************************************************/
+        /* The particle's journey is relative to its starting point (top: 80px, left: 80px) */
+        
+        @keyframes path-non-magnetic {
+            0% { transform: translate(0, 0); opacity: 1; }
+            70% { transform: translate(640px, 0); opacity: 1; } /* Moves to x=720px */
+            100% { transform: translate(640px, 250px); opacity: 0; } /* Falls straight down from x=720px into the correct bin */
+        }
+
+        @keyframes path-magnetic {
+            0% { transform: translate(0, 0); opacity: 1; }
+            70% { transform: translate(640px, 0); opacity: 1; } /* Moves to roller at x=720px */
+            85% { transform: translate(640px, 50px); opacity: 1; } /* Follows roller down to its bottom at y=130px */
+            100% { transform: translate(500px, 250px); opacity: 0; } /* Releases from roller and falls left into the magnetic bin (at x=580px) */
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Ore Dressing Simulations</h1>
+        <div class="explanation">
+            <p><strong>Ore Dressing</strong> (or Beneficiation) is the process of separating valuable minerals from waste rock (gangue). These animations show two common <strong>physical methods</strong> used in industry.</p>
+            <p>Click a tab below, then press "Start Animation" to see how it works!</p>
+        </div>
+
+        <div class="tab-nav">
+            <button class="tab-button active" data-tab="flotation">Froth Flotation</button>
+            <button class="tab-button" data-tab="magnetic">Magnetic Separation</button>
+        </div>
+
+        <div id="flotation" class="simulation-content active">
+            <!-- Flotation content remains the same -->
+        </div>
+        <div id="magnetic" class="simulation-content">
+            <!-- Magnetic content remains the same -->
+        </div>
+    </div>
+    
+    <!-- TEMPLATES for content -->
+    <template id="flotation-template">
+        <h3>Froth Flotation Process</h3>
+        <div id="froth-flotation-canvas" class="simulation-canvas">
+            <div class="tank"><div class="water"></div></div><div class="froth"></div>
+        </div>
+        <div class="controls">
+            <button id="start-flotation-btn">Start Animation</button>
+        </div>
+    </template>
+    
+    <template id="magnetic-template">
+        <h3>Magnetic Separation Process</h3>
+        <div id="magnetic-separation-canvas" class="simulation-canvas">
+            <div class="hopper"></div><div class="conveyor-belt"></div><div class="magnetic-roller"></div>
+            <div class="bin bin-magnetic"><div class="bin-label">Magnetic Ore</div></div>
+            <div class="bin bin-non-magnetic"><div class="bin-label">Non-Magnetic Gangue</div></div>
+        </div>
+        <div class="controls">
+            <button id="start-magnetic-btn">Start Animation</button>
+        </div>
+    </template>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const flotationContent = document.getElementById('flotation');
+        const magneticContent = document.getElementById('magnetic');
+
+        // --- TAB NAVIGATION & DYNAMIC CONTENT ---
+        const tabs = document.querySelectorAll('.tab-button');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Clear content
+                flotationContent.innerHTML = '';
+                magneticContent.innerHTML = '';
+                
+                // Deactivate all
+                tabs.forEach(t => t.classList.remove('active'));
+                flotationContent.classList.remove('active');
+                magneticContent.classList.remove('active');
+
+                // Activate clicked tab and its content
+                tab.classList.add('active');
+                const activeContent = document.getElementById(tab.dataset.tab);
+                const template = document.getElementById(`${tab.dataset.tab}-template`);
+                activeContent.appendChild(template.content.cloneNode(true));
+                activeContent.classList.add('active');
+                
+                // Re-initialize the active simulation
+                if (tab.dataset.tab === 'flotation') {
+                    initFlotation();
+                } else {
+                    initMagnetic();
+                }
+            });
+        });
+
+        // --- FROTH FLOTATION LOGIC ---
+        function initFlotation() {
+            const canvas = flotationContent.querySelector('.simulation-canvas');
+            const startBtn = flotationContent.querySelector('#start-flotation-btn');
+            
+            const createParticles = () => {
+                canvas.querySelectorAll('.particle').forEach(p => p.remove());
+                for (let i = 0; i < 30; i++) {
+                    const particle = document.createElement('div');
+                    particle.classList.add('particle', Math.random() > 0.5 ? 'ore' : 'gangue');
+                    particle.style.left = `${15 + Math.random() * 70}%`;
+                    particle.style.bottom = `${10 + Math.random() * 10}%`;
+                    canvas.appendChild(particle);
+                }
+            };
+            
+            const runAnimation = () => {
+                createParticles();
+                setTimeout(() => {
+                    canvas.querySelectorAll('.particle').forEach((p) => {
+                        const delay = Math.random() * 1.5;
+                        if (p.classList.contains('ore')) {
+                            p.style.animation = `float-up 3s ease-in-out ${delay}s forwards`;
+                        } else {
+                            p.style.animation = `sink-down 2s ease-in-out ${delay}s forwards`;
+                        }
+                    });
+                }, 100);
+            };
+            
+            startBtn.addEventListener('click', runAnimation);
+            runAnimation(); // Run once on init
+        }
+
+        // --- MAGNETIC SEPARATION LOGIC ---
+        function initMagnetic() {
+            const canvas = magneticContent.querySelector('.simulation-canvas');
+            const startBtn = magneticContent.querySelector('#start-magnetic-btn');
+            const roller = canvas.querySelector('.magnetic-roller');
+            
+            const runAnimation = () => {
+                canvas.querySelectorAll('.particle').forEach(p => p.remove());
+                roller.classList.add('active');
+
+                for (let i = 0; i < 20; i++) {
+                    const particle = document.createElement('div');
+                    particle.classList.add('particle', Math.random() > 0.5 ? 'magnetic' : 'non-magnetic');
+                    
+                    particle.style.left = '80px';
+                    particle.style.top = '80px'; 
+                    canvas.appendChild(particle);
+
+                    const delay = i * 0.4; 
+                    if (particle.classList.contains('magnetic')) {
+                        particle.style.animation = `path-magnetic 5s linear ${delay}s forwards`;
+                    } else {
+                        particle.style.animation = `path-non-magnetic 5s linear ${delay}s forwards`;
+                    }
+                }
+            };
+            
+            startBtn.addEventListener('click', runAnimation);
+            runAnimation(); // Run once on init
+        }
+
+        // --- INITIALIZE FIRST TAB ON LOAD ---
+        flotationContent.appendChild(document.getElementById('flotation-template').content.cloneNode(true));
+        initFlotation();
+    });
+    </script>
+</body>
+</html>
