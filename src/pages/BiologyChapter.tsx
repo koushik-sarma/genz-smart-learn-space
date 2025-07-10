@@ -118,6 +118,7 @@ export default function BiologyChapterPage() {
             <ChatInterface 
               chapterTitle={chapter.chapter}
               chapterNotes={notes}
+              subject="Biology"
             />
           </TabsContent>
 
@@ -125,6 +126,7 @@ export default function BiologyChapterPage() {
             <QuizInterface 
               chapterTitle={chapter.chapter}
               chapterNotes={notes}
+              subject="Biology"
             />
           </TabsContent>
 

@@ -254,6 +254,7 @@ export default function PhysicsChapter() {
             <ChatInterface 
               chapterTitle={chapter.chapter}
               chapterNotes={notes}
+              subject="Physics"
             />
           </TabsContent>
 
@@ -261,6 +262,7 @@ export default function PhysicsChapter() {
             <QuizInterface 
               chapterTitle={chapter.chapter}
               chapterNotes={notes}
+              subject="Physics"
             />
           </TabsContent>
 

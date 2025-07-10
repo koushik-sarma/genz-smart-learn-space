@@ -17,9 +17,10 @@ interface Message {
 interface ChatInterfaceProps {
   chapterTitle: string;
   chapterNotes: any;
+  subject?: string;
 }
 
-export default function ChatInterface({ chapterTitle, chapterNotes }: ChatInterfaceProps) {
+export default function ChatInterface({ chapterTitle, chapterNotes, subject = "Physics" }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -131,7 +132,7 @@ export default function ChatInterface({ chapterTitle, chapterNotes }: ChatInterf
           <Bot className="w-5 h-5 text-white" />
         </div>
         <div>
-          <h3 className="text-white font-medium">AI Physics Tutor</h3>
+          <h3 className="text-white font-medium">AI {subject} Tutor</h3>
           <p className="text-xs text-gray-400">Ask questions about {chapterTitle}</p>
         </div>
       </div>

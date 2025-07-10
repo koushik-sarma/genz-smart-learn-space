@@ -18,9 +18,10 @@ interface QuizQuestion {
 interface QuizInterfaceProps {
   chapterTitle: string;
   chapterNotes: any;
+  subject?: string;
 }
 
-export default function QuizInterface({ chapterTitle, chapterNotes }: QuizInterfaceProps) {
+export default function QuizInterface({ chapterTitle, chapterNotes, subject = "Physics" }: QuizInterfaceProps) {
   const [quiz, setQuiz] = useState<QuizQuestion[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<number[]>([]);
@@ -116,7 +117,7 @@ export default function QuizInterface({ chapterTitle, chapterNotes }: QuizInterf
         <CardHeader>
           <CardTitle className="text-white text-center flex items-center justify-center gap-2">
             <Brain className="h-6 w-6" />
-            Physics Quiz
+            {subject} Quiz
           </CardTitle>
         </CardHeader>
         <CardContent className="text-center py-8">
