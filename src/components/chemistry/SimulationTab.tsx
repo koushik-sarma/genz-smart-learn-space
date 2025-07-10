@@ -13,8 +13,12 @@ export default function SimulationTab({ chapter }: SimulationTabProps) {
     'Acids, Bases and Salts': 'acids-bases.html',
     'Structure of Atom': 'structure-of-atom.html',
     'Classification of Elements - The Periodic Table': 'periodic-table.html',
+    'Periodic Table': 'periodic-table.html',
+    'Carbon and its Compounds': 'carbon-compounds.html',
+    'Carbon Compounds': 'carbon-compounds.html',
     'Chemical Bonding': 'molecule-builder.html',
-    'Principle of Metallurgy': 'metallurgy.html'
+    'Principle of Metallurgy': 'metallurgy.html',
+    'Metallurgy': 'metallurgy.html'
   };
 
   const simulationFile = simulationMap[chapter.chapter];
