@@ -1,43 +1,20 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, TestTube2, MessageCircle, Brain, Zap } from 'lucide-react';
+import { TestTube2, MessageCircle, Brain, Zap } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import ChatInterface from '@/components/ChatInterface';
 import QuizInterface from '@/components/QuizInterface';
-
-interface ChapterNotes {
-  chemistry_notes_id: number;
-  chapter_summary: string;
-  chapter_takeaways: string;
-  chapter_discussion_points: string;
-  chapter_chemical_formulae: string;
-  chapter_chemical_equation: string;
-  chapter_quick_recall: string;
-  chapter_important_diagrams: string;
-  chapter_id: number;
-  board_id: number;
-  subject_id: number;
-}
-
-interface Chapter {
-  chemistry_chapter_id: number;
-  chapter: string;
-  chapter_description: string;
-  part: string | null;
-  class: number;
-  board_id: number;
-  subject_id: number;
-}
+import ChapterHeader from '@/components/chemistry/ChapterHeader';
+import SummaryTab from '@/components/chemistry/SummaryTab';
+import SimulationTab from '@/components/chemistry/SimulationTab';
+import { ChapterNotes, Chapter } from '@/types/chemistry';
 
 export default function ChemistryChapter() {
   const { chapterId } = useParams();
   const { user } = useAuth();
-  const navigate = useNavigate();
   const { toast } = useToast();
   const [notes, setNotes] = useState<ChapterNotes | null>(null);
   const [chapter, setChapter] = useState<Chapter | null>(null);
@@ -111,31 +88,8 @@ export default function ChemistryChapter() {
       <div className="absolute inset-0 bg-gradient-hero opacity-40 animate-gradient bg-[length:400%_400%]"></div>
       
       <div className="relative z-10 p-6 pb-12">
-        {/* Header */}
-        <div className="flex items-center gap-4 mb-8">
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => navigate('/chemistry')}
-            className="bg-white/10 border-white/20 text-white hover:bg-white/20"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Chemistry
-          </Button>
-          
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-gradient-primary rounded-xl shadow-glow">
-              <TestTube2 className="h-8 w-8 text-white" />
-            </div>
-            <div className="text-white">
-              <div className="text-sm text-purple-300">Chapter {chapter.chemistry_chapter_id}</div>
-              <h1 className="text-3xl font-bold">{chapter.chapter}</h1>
-              <p className="text-gray-300">{chapter.chapter_description}</p>
-            </div>
-          </div>
-        </div>
+        <ChapterHeader chapter={chapter} />
 
-        {/* Tabs */}
         <Tabs defaultValue="summary" className="w-full">
           <TabsList className="grid w-full grid-cols-4 bg-white/10 backdrop-blur-xl border-white/20">
             <TabsTrigger value="summary" className="data-[state=active]:bg-white/20 data-[state=active]:text-white text-gray-300">
@@ -157,128 +111,7 @@ export default function ChemistryChapter() {
           </TabsList>
 
           <TabsContent value="summary" className="mt-6">
-            {notes ? (
-              <div className="space-y-6">
-                <Card className="bg-white/10 backdrop-blur-xl border-white/20">
-                  <CardHeader>
-                    <CardTitle className="text-white">Chapter Summary</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-gray-300 space-y-2">
-                      {notes.chapter_summary.split(/[;.]/).filter(point => point.trim()).map((point, index) => (
-                        <div key={index} className="flex items-start gap-2">
-                          <span className="text-purple-300 mt-1">•</span>
-                          <span>{point.trim()}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-white/10 backdrop-blur-xl border-white/20">
-                  <CardHeader>
-                    <CardTitle className="text-white">Key Takeaways</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-gray-300 space-y-2">
-                      {notes.chapter_takeaways.split(/[;.]/).filter(point => point.trim()).map((point, index) => (
-                        <div key={index} className="flex items-start gap-2">
-                          <span className="text-purple-300 mt-1">•</span>
-                          <span>{point.trim()}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-white/10 backdrop-blur-xl border-white/20">
-                  <CardHeader>
-                    <CardTitle className="text-white">Key Discussion Points</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-gray-300 space-y-2">
-                      {notes.chapter_discussion_points.split(/[;.]/).filter(point => point.trim()).map((point, index) => (
-                        <div key={index} className="flex items-start gap-2">
-                          <span className="text-purple-300 mt-1">•</span>
-                          <span>{point.trim()}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-white/10 backdrop-blur-xl border-white/20">
-                  <CardHeader>
-                    <CardTitle className="text-white">Important Chemical Formulae</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-gray-300 space-y-3">
-                      {notes.chapter_chemical_formulae.split(/[;.]/).filter(formula => formula.trim()).map((formula, index) => (
-                        <div key={index} className="bg-slate-800/50 p-3 rounded-md border border-white/10">
-                          <code className="text-purple-300 font-mono text-sm">{formula.trim()}</code>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-white/10 backdrop-blur-xl border-white/20">
-                  <CardHeader>
-                    <CardTitle className="text-white">Chemical Equations to Remember</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-gray-300 space-y-3">
-                      {notes.chapter_chemical_equation.split(/[;.]/).filter(equation => equation.trim()).map((equation, index) => (
-                        <div key={index} className="bg-slate-800/50 p-3 rounded-md border border-white/10">
-                          <code className="text-purple-300 font-mono text-sm">{equation.trim()}</code>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-white/10 backdrop-blur-xl border-white/20">
-                  <CardHeader>
-                    <CardTitle className="text-white">Quick Recall</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-gray-300 space-y-2">
-                      {notes.chapter_quick_recall.split(/[;.]/).filter(point => point.trim()).map((point, index) => (
-                        <div key={index} className="flex items-start gap-2">
-                          <span className="text-purple-300 mt-1">•</span>
-                          <span>{point.trim()}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-white/10 backdrop-blur-xl border-white/20">
-                  <CardHeader>
-                    <CardTitle className="text-white">Important Diagrams</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-gray-300 space-y-2">
-                      {notes.chapter_important_diagrams.split(/[;.]/).filter(point => point.trim()).map((point, index) => (
-                        <div key={index} className="flex items-start gap-2">
-                          <span className="text-purple-300 mt-1">•</span>
-                          <span>{point.trim()}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            ) : (
-              <Card className="bg-white/10 backdrop-blur-xl border-white/20 text-center py-12">
-                <CardContent>
-                  <div className="text-white text-lg mb-2">No notes available</div>
-                  <div className="text-gray-300">
-                    Notes for this chapter will be available soon.
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+            <SummaryTab notes={notes} />
           </TabsContent>
 
           <TabsContent value="tutor" className="mt-6">
@@ -296,44 +129,7 @@ export default function ChemistryChapter() {
           </TabsContent>
 
           <TabsContent value="simulation" className="mt-6">
-            {(() => {
-              const simulationMap: Record<string, string> = {
-                'Chemical Reactions and Equations': 'chemical-equations.html',
-                'Acids, Bases and Salts': 'acids-bases.html',
-                'Structure of Atom': 'structure-of-atom.html',
-                'Classification of Elements - The Periodic Table': 'periodic-table.html',
-                'Chemical Bonding': 'molecule-builder.html',
-                'Principle of Metallurgy': 'metallurgy.html'
-              };
-
-              const simulationFile = simulationMap[chapter.chapter];
-
-              if (simulationFile) {
-                return (
-                  <Card className="bg-white/10 backdrop-blur-xl border-white/20 overflow-hidden">
-                    <CardContent className="p-0">
-                      <iframe
-                        src={`/${simulationFile}`}
-                        className="w-full h-[600px] border-0"
-                        title={`${chapter.chapter} Simulation`}
-                      />
-                    </CardContent>
-                  </Card>
-                );
-              }
-
-              return (
-                <Card className="bg-white/10 backdrop-blur-xl border-white/20 text-center py-12">
-                  <CardContent>
-                    <Zap className="h-16 w-16 text-purple-300 mx-auto mb-4" />
-                    <div className="text-white text-lg mb-2">Interactive Simulation</div>
-                    <div className="text-gray-300 mb-4">
-                      Simulation for {chapter.chapter} coming soon
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })()}
+            <SimulationTab chapter={chapter} />
           </TabsContent>
         </Tabs>
       </div>
