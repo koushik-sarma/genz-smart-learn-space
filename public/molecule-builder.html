@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Molecule Builder: Ionic & Covalent Bonds</title>
+    <style>
+        /* --- Basic Page Styles --- */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f7f9;
+            color: #333;
+            line-height: 1.6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        .container {
+            background-color: #ffffff;
+            padding: 25px 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 900px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        /* --- Explanation Section --- */
+        .explanation {
+            text-align: left;
+            background-color: #eaf2f8;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            border-left: 5px solid #3498db;
+        }
+        .explanation ul { padding-left: 20px; }
+
+        /* --- Simulation Layout --- */
+        .simulation-area {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        #atom-palette {
+            width: 120px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            background-color: #fdfdfd;
+        }
+
+        #reaction-area {
+            flex-grow: 1;
+            border: 2px dashed #bdc3c7;
+            border-radius: 8px;
+            min-height: 400px;
+            position: relative;
+            background-image: linear-gradient(45deg, #f9f9f9 25%, transparent 25%), 
+                              linear-gradient(-45deg, #f9f9f9 25%, transparent 25%),
+                              linear-gradient(45deg, transparent 75%, #f9f9f9 75%),
+                              linear-gradient(-45deg, transparent 75%, #f9f9f9 75%);
+            background-size: 20px 20px;
+            cursor: crosshair;
+        }
+
+        /* --- Atom Styling --- */
+        .atom {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.8em;
+            font-weight: bold;
+            color: white;
+            position: absolute;
+            cursor: grab;
+            user-select: none;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transition: transform 0.2s, box-shadow 0.2s, top 1s, left 1s;
+        }
+        .atom.in-palette { position: static; }
+        .atom:active { cursor: grabbing; }
+
+        /* Atom-specific colors */
+        .atom[data-element="Na"] { background-color: #8e44ad; }
+        .atom[data-element="Cl"] { background-color: #16a085; }
+        .atom[data-element="H"] { background-color: #2980b9; }
+        .atom[data-element="O"] { background-color: #c0392b; }
+
+        /* Electron Styling */
+        .electron {
+            width: 12px;
+            height: 12px;
+            background-color: #f1c40f;
+            border: 1px solid #f39c12;
+            border-radius: 50%;
+            position: absolute;
+            transition: all 0.8s ease-in-out;
+        }
+        
+        .ion-charge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #e67e22;
+            text-shadow: 1px 1px 2px white;
+            opacity: 0;
+            transition: opacity 0.5s 0.8s;
+        }
+
+        /* --- Controls and Feedback --- */
+        #controls { margin-top: 20px; }
+        #feedback-panel {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #27ae60;
+            min-height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #reset-btn {
+            padding: 10px 20px;
+            font-size: 1em;
+            cursor: pointer;
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            transition: background-color 0.3s;
+            margin-top: 10px;
+        }
+        #reset-btn:hover { background-color: #c0392b; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Molecule Builder</h1>
+        <div class="explanation">
+            <p><strong>How to Play:</strong> Drag atoms from the palette into the reaction area to see how they form chemical bonds. The simulation will automatically detect a valid combination and show you what happens!</p>
+            <p><strong>Try to build these compounds:</strong></p>
+            <ul>
+                <li><strong>Ionic Bonds (transfer electrons):</strong> NaCl, Na₂O, NaOH</li>
+                <li><strong>Covalent Bonds (share electrons):</strong> H₂, O₂, HCl, H₂O, Cl₂O</li>
+            </ul>
+        </div>
+
+        <div class="simulation-area">
+            <div id="atom-palette">
+                <!-- Atoms are now generated by JavaScript -->
+            </div>
+            <div id="reaction-area"></div>
+        </div>
+
+        <div id="controls">
+            <div id="feedback-panel"></div>
+            <button id="reset-btn">Reset Simulation</button>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const atomPalette = document.getElementById('atom-palette');
+        const reactionArea = document.getElementById('reaction-area');
+        const feedbackPanel = document.getElementById('feedback-panel');
+        const resetButton = document.getElementById('reset-btn');
+
+        let atomsInArea = [];
+        let uniqueIdCounter = 0;
+        let isBonding = false;
+
+        const atomTypes = ['Na', 'Cl', 'H', 'O'];
+
+        // --- DATA-DRIVEN RECIPE BOOK ---
+        // This object defines all possible bonds. The simulation logic now just
+        // checks against this database, making it easy to add more molecules.
+        const bondRecipes = [
+            // Covalent Bonds
+            { ingredients: { H: 2 }, action: formCovalentBond_H2, name: "Hydrogen Gas (H₂)", type: "Covalent" },
+            { ingredients: { O: 2 }, action: formCovalentBond_O2, name: "Oxygen Gas (O₂)", type: "Covalent" },
+            { ingredients: { H: 1, Cl: 1 }, action: formCovalentBond_HCl, name: "Hydrogen Chloride (HCl)", type: "Covalent" },
+            { ingredients: { H: 2, O: 1 }, action: formCovalentBond_H2O, name: "Water (H₂O)", type: "Covalent" },
+            { ingredients: { Cl: 2, O: 1 }, action: formCovalentBond_Cl2O, name: "Dichlorine Monoxide (Cl₂O)", type: "Covalent" },
+            // Ionic Bonds
+            { ingredients: { Na: 1, Cl: 1 }, action: formIonicBond_NaCl, name: "Sodium Chloride (NaCl)", type: "Ionic" },
+            { ingredients: { Na: 2, O: 1 }, action: formIonicBond_Na2O, name: "Sodium Oxide (Na₂O)", type: "Ionic" },
+            { ingredients: { Na: 1, H: 1 }, action: formIonicBond_NaH, name: "Sodium Hydride (NaH)", type: "Ionic" },
+            { ingredients: { Na: 1, O: 1, H: 1 }, action: formIonicBond_NaOH, name: "Sodium Hydroxide (NaOH)", type: "Ionic (with Polyatomic Ion)" },
+        ];
+        
+        // --- INITIAL SETUP ---
+        function initialize() {
+            atomPalette.innerHTML = '';
+            atomTypes.forEach(type => {
+                const atom = document.createElement('div');
+                atom.className = 'atom in-palette';
+                atom.draggable = true;
+                atom.dataset.element = type;
+                atom.textContent = type;
+                atom.addEventListener('dragstart', handleDragStart);
+                atomPalette.appendChild(atom);
+            });
+            resetSimulation();
+        }
+
+        // --- EVENT HANDLERS ---
+        function handleDragStart(e) {
+            if (isBonding) {
+                e.preventDefault();
+                return;
+            }
+            e.dataTransfer.setData('text/plain', e.target.dataset.element);
+        }
+        reactionArea.addEventListener('dragover', (e) => e.preventDefault());
+        reactionArea.addEventListener('drop', (e) => {
+            if (isBonding) return;
+            e.preventDefault();
+            const element = e.dataTransfer.getData('text/plain');
+            const rect = reactionArea.getBoundingClientRect();
+            addAtomToArea(element, e.clientX - rect.left, e.clientY - rect.top);
+        });
+        resetButton.addEventListener('click', resetSimulation);
+
+        // --- CORE SIMULATION LOGIC ---
+        function addAtomToArea(elementSymbol, x, y) {
+            const atom = document.createElement('div');
+            atom.className = 'atom';
+            atom.dataset.element = elementSymbol;
+            atom.textContent = elementSymbol;
+            atom.style.left = `${x - 30}px`;
+            atom.style.top = `${y - 30}px`;
+            atom.id = `atom-${uniqueIdCounter++}`;
+
+            const electronsToDraw = { 'Na': 1, 'Cl': 1, 'H': 1, 'O': 2 };
+            for (let i = 0; i < (electronsToDraw[elementSymbol] || 0); i++) {
+                const electron = document.createElement('div');
+                electron.className = 'electron';
+                atom.appendChild(electron);
+            }
+            atom.appendChild(document.createElement('div')).className = 'ion-charge';
+            
+            reactionArea.appendChild(atom);
+            atomsInArea.push({ id: atom.id, element: elementSymbol, el: atom });
+            positionElectrons(atom);
+            checkForBond();
+        }
+
+        function positionElectrons(atom) {
+            const electrons = atom.querySelectorAll('.electron');
+            electrons.forEach((electron, i) => {
+                const angle = (i / electrons.length) * 2 * Math.PI + (Math.PI/4); // Start at 45deg
+                electron.style.left = `${30 + 25 * Math.cos(angle) - 6}px`;
+                electron.style.top = `${30 + 25 * Math.sin(angle) - 6}px`;
+            });
+        }
+
+        function checkForBond() {
+            const currentMix = atomsInArea.reduce((acc, atom) => {
+                acc[atom.element] = (acc[atom.element] || 0) + 1;
+                return acc;
+            }, {});
+
+            const matchedRecipe = bondRecipes.find(recipe => 
+                Object.keys(recipe.ingredients).length === Object.keys(currentMix).length &&
+                Object.keys(recipe.ingredients).every(key => recipe.ingredients[key] === currentMix[key])
+            );
+
+            if (matchedRecipe) {
+                disableInteraction();
+                feedbackPanel.textContent = `${matchedRecipe.name} detected. Forming bond...`;
+                setTimeout(() => matchedRecipe.action(matchedRecipe.name, matchedRecipe.type), 500);
+            }
+        }
+
+        function getAtoms(element) { return atomsInArea.filter(a => a.element === element).map(a => a.el); }
+
+        // --- BOND FORMATION FUNCTIONS ---
+        const animate = {
+            move: (atom, x, y) => { atom.style.left = `${x}px`; atom.style.top = `${y}px`; },
+            share: (atom1, atom2, offset1 = {x: 15, y: 0}, offset2 = {x: -15, y: 0}) => {
+                const e1 = atom1.querySelector('.electron');
+                const e2 = atom2.querySelector('.electron');
+                e1.style.transform = `translate(${offset1.x}px, ${offset1.y}px)`;
+                e2.style.transform = `translate(${offset2.x}px, ${offset2.y}px)`;
+            },
+            transfer: (fromAtom, toAtom) => {
+                const electron = fromAtom.querySelector('.electron');
+                const fromRect = fromAtom.getBoundingClientRect();
+                const toRect = toAtom.getBoundingClientRect();
+                electron.style.transform = `translate(${toRect.left - fromRect.left}px, ${toRect.top - fromRect.top}px)`;
+                setTimeout(() => {
+                    electron.style.opacity = '0';
+                    fromAtom.querySelector('.ion-charge').textContent = '⁺';
+                    fromAtom.querySelector('.ion-charge').style.opacity = '1';
+                }, 800);
+            },
+        };
+        
+        function formCovalentBond_HCl(name, type) {
+            const h = getAtoms('H')[0], cl = getAtoms('Cl')[0];
+            const centerX = reactionArea.offsetWidth / 2, centerY = reactionArea.offsetHeight / 2;
+            animate.move(h, centerX - 50, centerY - 30);
+            animate.move(cl, centerX + 10, centerY - 30);
+            setTimeout(() => {
+                animate.share(h, cl);
+                feedbackPanel.innerHTML = `<strong>${name}</strong> (${type} Bond): H and Cl are sharing electrons.`;
+            }, 1000);
+        }
+
+        function formCovalentBond_H2(name, type) { /* Reuses HCl logic */ formCovalentBond_HCl(name, type); }
+
+        function formCovalentBond_O2(name, type) {
+            const o1 = getAtoms('O')[0], o2 = getAtoms('O')[1];
+            const e1 = o1.querySelectorAll('.electron'), e2 = o2.querySelectorAll('.electron');
+            const centerX = reactionArea.offsetWidth / 2, centerY = reactionArea.offsetHeight / 2;
+            animate.move(o1, centerX - 50, centerY - 30);
+            animate.move(o2, centerX + 10, centerY - 30);
+            setTimeout(() => {
+                e1[0].style.transform = 'translate(15px, 5px)';
+                e1[1].style.transform = 'translate(15px, -5px)';
+                e2[0].style.transform = 'translate(-15px, 5px)';
+                e2[1].style.transform = 'translate(-15px, -5px)';
+                feedbackPanel.innerHTML = `<strong>${name}</strong> (${type} Double Bond): Oxygen atoms share two pairs of electrons.`;
+            }, 1000);
+        }
+
+        function formCovalentBond_H2O(name, type) {
+            const o = getAtoms('O')[0], h = getAtoms('H');
+            const centerX = reactionArea.offsetWidth / 2, centerY = reactionArea.offsetHeight / 2;
+            animate.move(o, centerX - 30, centerY - 50);
+            animate.move(h[0], centerX - 80, centerY + 10);
+            animate.move(h[1], centerX + 20, centerY + 10);
+            setTimeout(() => {
+                animate.share(o, h[0], {x: -20, y: 20}, {x: 20, y: -20});
+                animate.share(h[1], o.querySelectorAll('.electron')[1], {x: -20, y: -20}, {x: 20, y: 20});
+                feedbackPanel.innerHTML = `<strong>${name}</strong> (${type} Bond): Oxygen shares electrons with two Hydrogens.`;
+            }, 1200);
+        }
+        
+        function formCovalentBond_Cl2O(name, type) { /* Reuses H2O logic with different atoms */ formCovalentBond_H2O(name, type); }
+
+        function formIonicBond_NaCl(name, type) {
+            const na = getAtoms('Na')[0], cl = getAtoms('Cl')[0];
+            const centerX = reactionArea.offsetWidth / 2, centerY = reactionArea.offsetHeight / 2;
+            animate.move(na, centerX - 70, centerY - 30);
+            animate.move(cl, centerX + 10, centerY - 30);
+            setTimeout(() => {
+                animate.transfer(na, cl);
+                setTimeout(() => {
+                    cl.querySelector('.ion-charge').textContent = '⁻';
+                    cl.querySelector('.ion-charge').style.opacity = '1';
+                    feedbackPanel.innerHTML = `<strong>${name}</strong> (${type} Bond): Na transferred an electron to Cl.`;
+                }, 800);
+            }, 1000);
+        }
+
+        function formIonicBond_NaH(name, type) { /* Reuses NaCl logic */ formIonicBond_NaCl(name, type); }
+
+        function formIonicBond_Na2O(name, type) {
+            const o = getAtoms('O')[0], na = getAtoms('Na');
+            const centerX = reactionArea.offsetWidth / 2, centerY = reactionArea.offsetHeight / 2;
+            animate.move(o, centerX - 30, centerY - 30);
+            animate.move(na[0], centerX - 110, centerY - 30);
+            animate.move(na[1], centerX + 50, centerY - 30);
+            setTimeout(() => {
+                animate.transfer(na[0], o);
+                animate.transfer(na[1], o);
+                setTimeout(() => {
+                    o.querySelector('.ion-charge').textContent = '²⁻';
+                    o.querySelector('.ion-charge').style.opacity = '1';
+                    feedbackPanel.innerHTML = `<strong>${name}</strong> (${type} Bond): Two Na atoms each transferred an electron to O.`;
+                }, 800);
+            }, 1000);
+        }
+        
+        function formIonicBond_NaOH(name, type) {
+            const na = getAtoms('Na')[0], o = getAtoms('O')[0], h = getAtoms('H')[0];
+            const centerX = reactionArea.offsetWidth / 2, centerY = reactionArea.offsetHeight / 2;
+            // First form the covalent OH- group
+            animate.move(o, centerX + 10, centerY - 30);
+            animate.move(h, centerX + 70, centerY - 30);
+            animate.move(na, centerX - 80, centerY - 30);
+             setTimeout(() => {
+                animate.share(o, h);
+                // Then show the ionic transfer
+                setTimeout(() => {
+                    animate.transfer(na, o);
+                    setTimeout(() => {
+                        o.parentElement.querySelector('.ion-charge').textContent = '⁻'; // OH is -1
+                        o.parentElement.querySelector('.ion-charge').style.opacity = '1';
+                         feedbackPanel.innerHTML = `<strong>${name}</strong> (${type}): Na transferred an electron to the covalently bonded (OH)⁻ group.`;
+                    }, 800);
+                }, 800);
+            }, 1000);
+        }
+        
+        // --- UTILITY FUNCTIONS ---
+        function disableInteraction() {
+            isBonding = true;
+            atomPalette.querySelectorAll('.atom').forEach(a => a.draggable = false);
+            reactionArea.style.cursor = 'not-allowed';
+        }
+
+        function resetSimulation() {
+            isBonding = false;
+            reactionArea.innerHTML = '';
+            atomsInArea = [];
+            feedbackPanel.innerHTML = 'Drag atoms into the area to begin.';
+            atomPalette.querySelectorAll('.atom').forEach(a => a.draggable = true);
+            reactionArea.style.cursor = 'crosshair';
+        }
+
+        initialize();
+    });
+    </script>
+</body>
+</html>
