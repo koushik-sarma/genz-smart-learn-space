@@ -14,6 +14,75 @@ export type Database = {
   }
   public: {
     Tables: {
+      dim_biology_chapters_notes: {
+        Row: {
+          biology_notes_id: number
+          board_id: number
+          chapter_discussion_points: string
+          chapter_id: number
+          chapter_important_diagrams: string
+          chapter_points_to_remember: string
+          chapter_quick_recall: string
+          chapter_summary: string
+          chapter_takeaways: string
+          subject_id: number
+        }
+        Insert: {
+          biology_notes_id?: number
+          board_id: number
+          chapter_discussion_points: string
+          chapter_id: number
+          chapter_important_diagrams: string
+          chapter_points_to_remember: string
+          chapter_quick_recall: string
+          chapter_summary: string
+          chapter_takeaways: string
+          subject_id: number
+        }
+        Update: {
+          biology_notes_id?: number
+          board_id?: number
+          chapter_discussion_points?: string
+          chapter_id?: number
+          chapter_important_diagrams?: string
+          chapter_points_to_remember?: string
+          chapter_quick_recall?: string
+          chapter_summary?: string
+          chapter_takeaways?: string
+          subject_id?: number
+        }
+        Relationships: []
+      }
+      dim_biology_subject: {
+        Row: {
+          board_id: number
+          chapter: string
+          chapter_description: string
+          class: number
+          part: string | null
+          physic_biology_id: number
+          subject_id: number
+        }
+        Insert: {
+          board_id: number
+          chapter: string
+          chapter_description: string
+          class: number
+          part?: string | null
+          physic_biology_id?: number
+          subject_id: number
+        }
+        Update: {
+          board_id?: number
+          chapter?: string
+          chapter_description?: string
+          class?: number
+          part?: string | null
+          physic_biology_id?: number
+          subject_id?: number
+        }
+        Relationships: []
+      }
       dim_boards: {
         Row: {
           board_id: number
