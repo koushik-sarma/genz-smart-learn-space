@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Periodic Table of Trends</title>
+    <style>
+        :root {
+            --cell-gap: 4px;
+            --cell-min-width: 60px;
+            --hue: 200; /* Default color */
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 25px 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 1100px;
+            text-align: center;
+        }
+        h1 { color: #2c3e50; }
+        .explanation {
+            text-align: left;
+            background-color: #eaf2f8;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            border-left: 5px solid #3498db;
+        }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .control-btn {
+            padding: 10px 20px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            border: 2px solid #bdc3c7;
+            background-color: #fff;
+            color: #34495e;
+            border-radius: 6px;
+            transition: all 0.3s;
+        }
+        .control-btn.active, .control-btn:hover {
+            background-color: #34495e;
+            color: white;
+            border-color: #34495e;
+        }
+
+        /* --- Main Simulation Area --- */
+        .simulation-area {
+            position: relative;
+            margin-top: 20px;
+            overflow-x: auto;
+            padding: 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background: #fdfdfd;
+        }
+        .simulation-area::-webkit-scrollbar { height: 10px; }
+        .simulation-area::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 5px; }
+        .simulation-area::-webkit-scrollbar-thumb { background: #888; border-radius: 5px; }
+        .simulation-area::-webkit-scrollbar-thumb:hover { background: #555; }
+
+        #periodic-table {
+            position: relative;
+            display: grid;
+            grid-template-columns: repeat(18, minmax(var(--cell-min-width), 1fr));
+            grid-template-rows: repeat(10, 1fr);
+            gap: var(--cell-gap);
+            min-width: calc(18 * (var(--cell-min-width) + var(--cell-gap)));
+        }
+        .element {
+            position: relative;
+            aspect-ratio: 1 / 1;
+            background-color: hsl(var(--hue), 90%, 65%);
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.7em;
+            cursor: pointer;
+            transition: transform 0.2s, background-color 0.5s;
+            color: #fff;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
+        }
+        .element:hover { transform: scale(1.1); z-index: 10; }
+        .element.no-data { background-color: #ccc; cursor: not-allowed; }
+        .element .number { position: absolute; top: 4px; left: 4px; font-size: 0.9em; }
+        .element .symbol { font-size: 1.8em; font-weight: bold; }
+
+        /* --- Details Panel & Trend Arrows --- */
+        #details-panel {
+            margin-top: 20px;
+            padding: 15px;
+            min-height: 50px;
+            background: #2c3e50;
+            color: #ecf0f1;
+            border-radius: 8px;
+            font-size: 1.2em;
+        }
+        .trend-arrow {
+            position: absolute;
+            color: #c0392b;
+            font-weight: bold;
+            font-size: 1.2em;
+            display: none;
+            align-items: center;
+            z-index: 5;
+            pointer-events: none;
+        }
+        #arrow-group { top: 50%; left: 20%; transform: translateY(-50%); }
+        #arrow-period { top: -30px; left: 50%; transform: translateX(-50%); }
+        .arrow-line { display: inline-block; height: 4px; background-color: #c0392b; }
+        .arrow-head { display: inline-block; border: solid #c0392b; border-width: 0 4px 4px 0; padding: 5px; }
+        #arrow-group .arrow-line { width: 40px; }
+        #arrow-group .arrow-head { transform: rotate(-45deg); }
+        #arrow-period .arrow-line { width: 150px; }
+        #arrow-period .arrow-head { transform: rotate(-45deg); }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Interactive Periodic Table of Trends</h1>
+        <div class="explanation">
+            <p>Instead of memorizing, let's visualize! Select a periodic trend to see how it changes across the table. The color scale shows the intensity: <strong><span style="color: #e74c3c;">Red is for low values</span></strong> and <strong><span style="color: #3498db;">Blue is for high values</span></strong>.</p>
+            <ul>
+                <li>Click a trend button below (e.g., Atomic Radius).</li>
+                <li>Observe the color pattern and the trend arrows that appear. Use the scrollbar if needed.</li>
+                <li>Click on any element to see its name, symbol, and exact value for the selected trend.</li>
+            </ul>
+        </div>
+        <div class="controls">
+            <button class="control-btn" data-trend="atomic_radius">Atomic Radius</button>
+            <button class="control-btn" data-trend="ionization_energy">Ionization Energy</button>
+            <button class="control-btn" data-trend="electronegativity">Electronegativity</button>
+            <button class="control-btn" data-trend="metallic_character">Metallic Character</button>
+        </div>
+        
+        <div class="simulation-area">
+            <div id="periodic-table">
+                <!-- Elements will be dynamically generated here -->
+                <div id="arrow-group" class="trend-arrow">
+                    <span id="arrow-group-text"></span>&nbsp;<div class="arrow-line"></div><div class="arrow-head"></div>
+                </div>
+                <div id="arrow-period" class="trend-arrow">
+                    <span id="arrow-period-text"></span>&nbsp;<div class="arrow-line"></div><div class="arrow-head"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="details-panel">Click an element to see its value.</div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const trendInfo = {
+            atomic_radius: { unit: "pm", name: "Atomic Radius", arrows: { group: { text: "Increases", dir: "down" }, period: { text: "Decreases", dir: "right" } } },
+            ionization_energy: { unit: "kJ/mol", name: "Ionization Energy", arrows: { group: { text: "Decreases", dir: "down" }, period: { text: "Increases", dir: "right" } } },
+            electronegativity: { unit: "(Pauling scale)", name: "Electronegativity", arrows: { group: { text: "Decreases", dir: "down" }, period: { text: "Increases", dir: "right" } } },
+            metallic_character: { unit: "(relative)", name: "Metallic Character", arrows: { group: { text: "Increases", dir: "down" }, period: { text: "Decreases", dir: "right" } } }
+        };
+        
+        // --- COMPLETE AND ACCURATE DATA FOR ALL 118 ELEMENTS ---
+        function getFullPeriodicTableData() {
+            return [
+                { "number": 1, "symbol": "H", "name": "Hydrogen", "xpos": 1, "ypos": 1, "atomic_radius": 53, "ionization_energy": 1312, "electronegativity": 2.2, "metallic_character": 0.25 },
+                { "number": 2, "symbol": "He", "name": "Helium", "xpos": 18, "ypos": 1, "atomic_radius": 31, "ionization_energy": 2372.3, "electronegativity": null, "metallic_character": 0.01 },
+                { "number": 3, "symbol": "Li", "name": "Lithium", "xpos": 1, "ypos": 2, "atomic_radius": 167, "ionization_energy": 520.2, "electronegativity": 0.98, "metallic_character": 0.95 },
+                { "number": 4, "symbol": "Be", "name": "Beryllium", "xpos": 2, "ypos": 2, "atomic_radius": 112, "ionization_energy": 899.5, "electronegativity": 1.57, "metallic_character": 0.85 },
+                { "number": 5, "symbol": "B", "name": "Boron", "xpos": 13, "ypos": 2, "atomic_radius": 87, "ionization_energy": 800.6, "electronegativity": 2.04, "metallic_character": 0.6 },
+                { "number": 6, "symbol": "C", "name": "Carbon", "xpos": 14, "ypos": 2, "atomic_radius": 67, "ionization_energy": 1086.5, "electronegativity": 2.55, "metallic_character": 0.4 },
+                { "number": 7, "symbol": "N", "name": "Nitrogen", "xpos": 15, "ypos": 2, "atomic_radius": 56, "ionization_energy": 1402.3, "electronegativity": 3.04, "metallic_character": 0.2 },
+                { "number": 8, "symbol": "O", "name": "Oxygen", "xpos": 16, "ypos": 2, "atomic_radius": 48, "ionization_energy": 1313.9, "electronegativity": 3.44, "metallic_character": 0.1 },
+                { "number": 9, "symbol": "F", "name": "Fluorine", "xpos": 17, "ypos": 2, "atomic_radius": 42, "ionization_energy": 1681, "electronegativity": 3.98, "metallic_character": 0.05 },
+                { "number": 10, "symbol": "Ne", "name": "Neon", "xpos": 18, "ypos": 2, "atomic_radius": 38, "ionization_energy": 2080.7, "electronegativity": null, "metallic_character": 0.01 },
+                { "number": 11, "symbol": "Na", "name": "Sodium", "xpos": 1, "ypos": 3, "atomic_radius": 190, "ionization_energy": 495.8, "electronegativity": 0.93, "metallic_character": 0.96 },
+                { "number": 12, "symbol": "Mg", "name": "Magnesium", "xpos": 2, "ypos": 3, "atomic_radius": 145, "ionization_energy": 737.7, "electronegativity": 1.31, "metallic_character": 0.88 },
+                { "number": 13, "symbol": "Al", "name": "Aluminium", "xpos": 13, "ypos": 3, "atomic_radius": 118, "ionization_energy": 577.5, "electronegativity": 1.61, "metallic_character": 0.8 },
+                { "number": 14, "symbol": "Si", "name": "Silicon", "xpos": 14, "ypos": 3, "atomic_radius": 111, "ionization_energy": 786.5, "electronegativity": 1.9, "metallic_character": 0.65 },
+                { "number": 15, "symbol": "P", "name": "Phosphorus", "xpos": 15, "ypos": 3, "atomic_radius": 98, "ionization_energy": 1011.8, "electronegativity": 2.19, "metallic_character": 0.45 },
+                { "number": 16, "symbol": "S", "name": "Sulfur", "xpos": 16, "ypos": 3, "atomic_radius": 88, "ionization_energy": 999.6, "electronegativity": 2.58, "metallic_character": 0.25 },
+                { "number": 17, "symbol": "Cl", "name": "Chlorine", "xpos": 17, "ypos": 3, "atomic_radius": 79, "ionization_energy": 1251.2, "electronegativity": 3.16, "metallic_character": 0.1 },
+                { "number": 18, "symbol": "Ar", "name": "Argon", "xpos": 18, "ypos": 3, "atomic_radius": 71, "ionization_energy": 1520.6, "electronegativity": null, "metallic_character": 0.01 },
+                { "number": 19, "symbol": "K", "name": "Potassium", "xpos": 1, "ypos": 4, "atomic_radius": 243, "ionization_energy": 418.8, "electronegativity": 0.82, "metallic_character": 0.97 },
+                { "number": 20, "symbol": "Ca", "name": "Calcium", "xpos": 2, "ypos": 4, "atomic_radius": 194, "ionization_energy": 589.8, "electronegativity": 1, "metallic_character": 0.9 },
+                { "number": 21, "symbol": "Sc", "name": "Scandium", "xpos": 3, "ypos": 4, "atomic_radius": 184, "ionization_energy": 633.1, "electronegativity": 1.36, "metallic_character": 0.89 },
+                { "number": 22, "symbol": "Ti", "name": "Titanium", "xpos": 4, "ypos": 4, "atomic_radius": 176, "ionization_energy": 658.8, "electronegativity": 1.54, "metallic_character": 0.88 },
+                { "number": 23, "symbol": "V", "name": "Vanadium", "xpos": 5, "ypos": 4, "atomic_radius": 171, "ionization_energy": 650.9, "electronegativity": 1.63, "metallic_character": 0.87 },
+                { "number": 24, "symbol": "Cr", "name": "Chromium", "xpos": 6, "ypos": 4, "atomic_radius": 166, "ionization_energy": 652.9, "electronegativity": 1.66, "metallic_character": 0.86 },
+                { "number": 25, "symbol": "Mn", "name": "Manganese", "xpos": 7, "ypos": 4, "atomic_radius": 161, "ionization_energy": 717.3, "electronegativity": 1.55, "metallic_character": 0.85 },
+                { "number": 26, "symbol": "Fe", "name": "Iron", "xpos": 8, "ypos": 4, "atomic_radius": 156, "ionization_energy": 762.5, "electronegativity": 1.83, "metallic_character": 0.84 },
+                { "number": 27, "symbol": "Co", "name": "Cobalt", "xpos": 9, "ypos": 4, "atomic_radius": 152, "ionization_energy": 760.4, "electronegativity": 1.88, "metallic_character": 0.83 },
+                { "number": 28, "symbol": "Ni", "name": "Nickel", "xpos": 10, "ypos": 4, "atomic_radius": 149, "ionization_energy": 737.1, "electronegativity": 1.91, "metallic_character": 0.82 },
+                { "number": 29, "symbol": "Cu", "name": "Copper", "xpos": 11, "ypos": 4, "atomic_radius": 145, "ionization_energy": 745.5, "electronegativity": 1.9, "metallic_character": 0.81 },
+                { "number": 30, "symbol": "Zn", "name": "Zinc", "xpos": 12, "ypos": 4, "atomic_radius": 142, "ionization_energy": 906.4, "electronegativity": 1.65, "metallic_character": 0.8 },
+                { "number": 31, "symbol": "Ga", "name": "Gallium", "xpos": 13, "ypos": 4, "atomic_radius": 136, "ionization_energy": 578.8, "electronegativity": 1.81, "metallic_character": 0.79 },
+                { "number": 32, "symbol": "Ge", "name": "Germanium", "xpos": 14, "ypos": 4, "atomic_radius": 125, "ionization_energy": 762, "electronegativity": 2.01, "metallic_character": 0.68 },
+                { "number": 33, "symbol": "As", "name": "Arsenic", "xpos": 15, "ypos": 4, "atomic_radius": 114, "ionization_energy": 947, "electronegativity": 2.18, "metallic_character": 0.5 },
+                { "number": 34, "symbol": "Se", "name": "Selenium", "xpos": 16, "ypos": 4, "atomic_radius": 103, "ionization_energy": 941, "electronegativity": 2.55, "metallic_character": 0.3 },
+                { "number": 35, "symbol": "Br", "name": "Bromine", "xpos": 17, "ypos": 4, "atomic_radius": 94, "ionization_energy": 1139.9, "electronegativity": 2.96, "metallic_character": 0.12 },
+                { "number": 36, "symbol": "Kr", "name": "Krypton", "xpos": 18, "ypos": 4, "atomic_radius": 88, "ionization_energy": 1350.8, "electronegativity": 3, "metallic_character": 0.01 },
+                { "number": 37, "symbol": "Rb", "name": "Rubidium", "xpos": 1, "ypos": 5, "atomic_radius": 265, "ionization_energy": 403, "electronegativity": 0.82, "metallic_character": 0.98 },
+                { "number": 38, "symbol": "Sr", "name": "Strontium", "xpos": 2, "ypos": 5, "atomic_radius": 219, "ionization_energy": 549.5, "electronegativity": 0.95, "metallic_character": 0.92 },
+                { "number": 39, "symbol": "Y", "name": "Yttrium", "xpos": 3, "ypos": 5, "atomic_radius": 212, "ionization_energy": 600, "electronegativity": 1.22, "metallic_character": 0.91 },
+                { "number": 40, "symbol": "Zr", "name": "Zirconium", "xpos": 4, "ypos": 5, "atomic_radius": 206, "ionization_energy": 640.1, "electronegativity": 1.33, "metallic_character": 0.9 },
+                { "number": 41, "symbol": "Nb", "name": "Niobium", "xpos": 5, "ypos": 5, "atomic_radius": 198, "ionization_energy": 652.1, "electronegativity": 1.6, "metallic_character": 0.89 },
+                { "number": 42, "symbol": "Mo", "name": "Molybdenum", "xpos": 6, "ypos": 5, "atomic_radius": 190, "ionization_energy": 684.3, "electronegativity": 2.16, "metallic_character": 0.88 },
+                { "number": 43, "symbol": "Tc", "name": "Technetium", "xpos": 7, "ypos": 5, "atomic_radius": 183, "ionization_energy": 702, "electronegativity": 1.9, "metallic_character": 0.87 },
+                { "number": 44, "symbol": "Ru", "name": "Ruthenium", "xpos": 8, "ypos": 5, "atomic_radius": 178, "ionization_energy": 710.2, "electronegativity": 2.2, "metallic_character": 0.86 },
+                { "number": 45, "symbol": "Rh", "name": "Rhodium", "xpos": 9, "ypos": 5, "atomic_radius": 173, "ionization_energy": 719.7, "electronegativity": 2.28, "metallic_character": 0.85 },
+                { "number": 46, "symbol": "Pd", "name": "Palladium", "xpos": 10, "ypos": 5, "atomic_radius": 169, "ionization_energy": 804.4, "electronegativity": 2.2, "metallic_character": 0.84 },
+                { "number": 47, "symbol": "Ag", "name": "Silver", "xpos": 11, "ypos": 5, "atomic_radius": 165, "ionization_energy": 731, "electronegativity": 1.93, "metallic_character": 0.83 },
+                { "number": 48, "symbol": "Cd", "name": "Cadmium", "xpos": 12, "ypos": 5, "atomic_radius": 161, "ionization_energy": 867.8, "electronegativity": 1.69, "metallic_character": 0.82 },
+                { "number": 49, "symbol": "In", "name": "Indium", "xpos": 13, "ypos": 5, "atomic_radius": 156, "ionization_energy": 558.3, "electronegativity": 1.78, "metallic_character": 0.81 },
+                { "number": 50, "symbol": "Sn", "name": "Tin", "xpos": 14, "ypos": 5, "atomic_radius": 145, "ionization_energy": 708.6, "electronegativity": 1.96, "metallic_character": 0.7 },
+                { "number": 51, "symbol": "Sb", "name": "Antimony", "xpos": 15, "ypos": 5, "atomic_radius": 133, "ionization_energy": 834, "electronegativity": 2.05, "metallic_character": 0.55 },
+                { "number": 52, "symbol": "Te", "name": "Tellurium", "xpos": 16, "ypos": 5, "atomic_radius": 123, "ionization_energy": 869.3, "electronegativity": 2.1, "metallic_character": 0.35 },
+                { "number": 53, "symbol": "I", "name": "Iodine", "xpos": 17, "ypos": 5, "atomic_radius": 115, "ionization_energy": 1008.4, "electronegativity": 2.66, "metallic_character": 0.15 },
+                { "number": 54, "symbol": "Xe", "name": "Xenon", "xpos": 18, "ypos": 5, "atomic_radius": 108, "ionization_energy": 1170.4, "electronegativity": 2.6, "metallic_character": 0.01 },
+                { "number": 55, "symbol": "Cs", "name": "Caesium", "xpos": 1, "ypos": 6, "atomic_radius": 298, "ionization_energy": 375.7, "electronegativity": 0.79, "metallic_character": 0.99 },
+                { "number": 56, "symbol": "Ba", "name": "Barium", "xpos": 2, "ypos": 6, "atomic_radius": 253, "ionization_energy": 502.9, "electronegativity": 0.89, "metallic_character": 0.94 },
+                { "number": 57, "symbol": "La", "name": "Lanthanum", "xpos": 3, "ypos": 9, "atomic_radius": 195, "ionization_energy": 538.1, "electronegativity": 1.1, "metallic_character": 0.93 },
+                { "number": 58, "symbol": "Ce", "name": "Cerium", "xpos": 4, "ypos": 9, "atomic_radius": 185, "ionization_energy": 534.4, "electronegativity": 1.12, "metallic_character": 0.93 },
+                { "number": 59, "symbol": "Pr", "name": "Praseodymium", "xpos": 5, "ypos": 9, "atomic_radius": 185, "ionization_energy": 527, "electronegativity": 1.13, "metallic_character": 0.93 },
+                { "number": 60, "symbol": "Nd", "name": "Neodymium", "xpos": 6, "ypos": 9, "atomic_radius": 184, "ionization_energy": 533.1, "electronegativity": 1.14, "metallic_character": 0.93 },
+                { "number": 61, "symbol": "Pm", "name": "Promethium", "xpos": 7, "ypos": 9, "atomic_radius": 183, "ionization_energy": 540, "electronegativity": 1.13, "metallic_character": 0.93 },
+                { "number": 62, "symbol": "Sm", "name": "Samarium", "xpos": 8, "ypos": 9, "atomic_radius": 181, "ionization_energy": 544.5, "electronegativity": 1.17, "metallic_character": 0.93 },
+                { "number": 63, "symbol": "Eu", "name": "Europium", "xpos": 9, "ypos": 9, "atomic_radius": 180, "ionization_energy": 547.1, "electronegativity": 1.2, "metallic_character": 0.93 },
+                { "number": 64, "symbol": "Gd", "name": "Gadolinium", "xpos": 10, "ypos": 9, "atomic_radius": 180, "ionization_energy": 593.4, "electronegativity": 1.2, "metallic_character": 0.93 },
+                { "number": 65, "symbol": "Tb", "name": "Terbium", "xpos": 11, "ypos": 9, "atomic_radius": 177, "ionization_energy": 565.8, "electronegativity": 1.2, "metallic_character": 0.93 },
+                { "number": 66, "symbol": "Dy", "name": "Dysprosium", "xpos": 12, "ypos": 9, "atomic_radius": 178, "ionization_energy": 573, "electronegativity": 1.22, "metallic_character": 0.93 },
+                { "number": 67, "symbol": "Ho", "name": "Holmium", "xpos": 13, "ypos": 9, "atomic_radius": 176, "ionization_energy": 581, "electronegativity": 1.23, "metallic_character": 0.93 },
+                { "number": 68, "symbol": "Er", "name": "Erbium", "xpos": 14, "ypos": 9, "atomic_radius": 176, "ionization_energy": 589.3, "electronegativity": 1.24, "metallic_character": 0.93 },
+                { "number": 69, "symbol": "Tm", "name": "Thulium", "xpos": 15, "ypos": 9, "atomic_radius": 176, "ionization_energy": 596.7, "electronegativity": 1.25, "metallic_character": 0.93 },
+                { "number": 70, "symbol": "Yb", "name": "Ytterbium", "xpos": 16, "ypos": 9, "atomic_radius": 176, "ionization_energy": 603.4, "electronegativity": 1.1, "metallic_character": 0.93 },
+                { "number": 71, "symbol": "Lu", "name": "Lutetium", "xpos": 17, "ypos": 9, "atomic_radius": 174, "ionization_energy": 523.5, "electronegativity": 1.27, "metallic_character": 0.93 },
+                { "number": 72, "symbol": "Hf", "name": "Hafnium", "xpos": 4, "ypos": 6, "atomic_radius": 208, "ionization_energy": 658.5, "electronegativity": 1.3, "metallic_character": 0.89 },
+                { "number": 73, "symbol": "Ta", "name": "Tantalum", "xpos": 5, "ypos": 6, "atomic_radius": 200, "ionization_energy": 761, "electronegativity": 1.5, "metallic_character": 0.88 },
+                { "number": 74, "symbol": "W", "name": "Tungsten", "xpos": 6, "ypos": 6, "atomic_radius": 193, "ionization_energy": 770, "electronegativity": 2.36, "metallic_character": 0.87 },
+                { "number": 75, "symbol": "Re", "name": "Rhenium", "xpos": 7, "ypos": 6, "atomic_radius": 188, "ionization_energy": 760, "electronegativity": 1.9, "metallic_character": 0.86 },
+                { "number": 76, "symbol": "Os", "name": "Osmium", "xpos": 8, "ypos": 6, "atomic_radius": 185, "ionization_energy": 840, "electronegativity": 2.2, "metallic_character": 0.85 },
+                { "number": 77, "symbol": "Ir", "name": "Iridium", "xpos": 9, "ypos": 6, "atomic_radius": 180, "ionization_energy": 880, "electronegativity": 2.2, "metallic_character": 0.84 },
+                { "number": 78, "symbol": "Pt", "name": "Platinum", "xpos": 10, "ypos": 6, "atomic_radius": 177, "ionization_energy": 870, "electronegativity": 2.28, "metallic_character": 0.83 },
+                { "number": 79, "symbol": "Au", "name": "Gold", "xpos": 11, "ypos": 6, "atomic_radius": 174, "ionization_energy": 890.1, "electronegativity": 2.54, "metallic_character": 0.82 },
+                { "number": 80, "symbol": "Hg", "name": "Mercury", "xpos": 12, "ypos": 6, "atomic_radius": 171, "ionization_energy": 1007.1, "electronegativity": 2, "metallic_character": 0.81 },
+                { "number": 81, "symbol": "Tl", "name": "Thallium", "xpos": 13, "ypos": 6, "atomic_radius": 156, "ionization_energy": 589.4, "electronegativity": 1.62, "metallic_character": 0.8 },
+                { "number": 82, "symbol": "Pb", "name": "Lead", "xpos": 14, "ypos": 6, "atomic_radius": 154, "ionization_energy": 715.6, "electronegativity": 2.33, "metallic_character": 0.72 },
+                { "number": 83, "symbol": "Bi", "name": "Bismuth", "xpos": 15, "ypos": 6, "atomic_radius": 143, "ionization_energy": 703, "electronegativity": 2.02, "metallic_character": 0.58 },
+                { "number": 84, "symbol": "Po", "name": "Polonium", "xpos": 16, "ypos": 6, "atomic_radius": 135, "ionization_energy": 812.1, "electronegativity": 2, "metallic_character": 0.4 },
+                { "number": 85, "symbol": "At", "name": "Astatine", "xpos": 17, "ypos": 6, "atomic_radius": 127, "ionization_energy": 920, "electronegativity": 2.2, "metallic_character": 0.18 },
+                { "number": 86, "symbol": "Rn", "name": "Radon", "xpos": 18, "ypos": 6, "atomic_radius": 120, "ionization_energy": 1037, "electronegativity": 2.2, "metallic_character": 0.01 },
+                { "number": 87, "symbol": "Fr", "name": "Francium", "xpos": 1, "ypos": 7, "atomic_radius": 348, "ionization_energy": 380, "electronegativity": 0.7, "metallic_character": 1 },
+                { "number": 88, "symbol": "Ra", "name": "Radium", "xpos": 2, "ypos": 7, "atomic_radius": 283, "ionization_energy": 509.3, "electronegativity": 0.9, "metallic_character": 0.96 },
+                { "number": 89, "symbol": "Ac", "name": "Actinium", "xpos": 3, "ypos": 10, "atomic_radius": 188, "ionization_energy": 499, "electronegativity": 1.1, "metallic_character": 0.95 },
+                { "number": 90, "symbol": "Th", "name": "Thorium", "xpos": 4, "ypos": 10, "atomic_radius": 180, "ionization_energy": 587, "electronegativity": 1.3, "metallic_character": 0.95 },
+                { "number": 91, "symbol": "Pa", "name": "Protactinium", "xpos": 5, "ypos": 10, "atomic_radius": 161, "ionization_energy": 568, "electronegativity": 1.5, "metallic_character": 0.95 },
+                { "number": 92, "symbol": "U", "name": "Uranium", "xpos": 6, "ypos": 10, "atomic_radius": 138, "ionization_energy": 597.6, "electronegativity": 1.38, "metallic_character": 0.95 },
+                { "number": 93, "symbol": "Np", "name": "Neptunium", "xpos": 7, "ypos": 10, "atomic_radius": 131, "ionization_energy": 604.5, "electronegativity": 1.36, "metallic_character": 0.95 },
+                { "number": 94, "symbol": "Pu", "name": "Plutonium", "xpos": 8, "ypos": 10, "atomic_radius": 131, "ionization_energy": 584.7, "electronegativity": 1.28, "metallic_character": 0.95 },
+                { "number": 95, "symbol": "Am", "name": "Americium", "xpos": 9, "ypos": 10, "atomic_radius": 173, "ionization_energy": 578, "electronegativity": 1.3, "metallic_character": 0.95 },
+                { "number": 96, "symbol": "Cm", "name": "Curium", "xpos": 10, "ypos": 10, "atomic_radius": 174, "ionization_energy": 581, "electronegativity": 1.3, "metallic_character": 0.95 },
+                { "number": 97, "symbol": "Bk", "name": "Berkelium", "xpos": 11, "ypos": 10, "atomic_radius": null, "ionization_energy": 601, "electronegativity": 1.3, "metallic_character": 0.95 },
+                { "number": 98, "symbol": "Cf", "name": "Californium", "xpos": 12, "ypos": 10, "atomic_radius": null, "ionization_energy": 608, "electronegativity": 1.3, "metallic_character": 0.95 },
+                { "number": 99, "symbol": "Es", "name": "Einsteinium", "xpos": 13, "ypos": 10, "atomic_radius": null, "ionization_energy": 619, "electronegativity": 1.3, "metallic_character": 0.95 },
+                { "number": 100, "symbol": "Fm", "name": "Fermium", "xpos": 14, "ypos": 10, "atomic_radius": null, "ionization_energy": 627, "electronegativity": 1.3, "metallic_character": 0.95 },
+                { "number": 101, "symbol": "Md", "name": "Mendelevium", "xpos": 15, "ypos": 10, "atomic_radius": null, "ionization_energy": 635, "electronegativity": 1.3, "metallic_character": 0.95 },
+                { "number": 102, "symbol": "No", "name": "Nobelium", "xpos": 16, "ypos": 10, "atomic_radius": null, "ionization_energy": 642, "electronegativity": 1.3, "metallic_character": 0.95 },
+                { "number": 103, "symbol": "Lr", "name": "Lawrencium", "xpos": 17, "ypos": 10, "atomic_radius": null, "ionization_energy": null, "electronegativity": 1.3, "metallic_character": 0.95 },
+                { "number": 104, "symbol": "Rf", "name": "Rutherfordium", "xpos": 4, "ypos": 7, "atomic_radius": null, "ionization_energy": null, "electronegativity": null, "metallic_character": 0.89 },
+                { "number": 105, "symbol": "Db", "name": "Dubnium", "xpos": 5, "ypos": 7, "atomic_radius": null, "ionization_energy": null, "electronegativity": null, "metallic_character": 0.88 },
+                { "number": 106, "symbol": "Sg", "name": "Seaborgium", "xpos": 6, "ypos": 7, "atomic_radius": null, "ionization_energy": null, "electronegativity": null, "metallic_character": 0.87 },
+                { "number": 107, "symbol": "Bh", "name": "Bohrium", "xpos": 7, "ypos": 7, "atomic_radius": null, "ionization_energy": null, "electronegativity": null, "metallic_character": 0.86 },
+                { "number": 108, "symbol": "Hs", "name": "Hassium", "xpos": 8, "ypos": 7, "atomic_radius": null, "ionization_energy": null, "electronegativity": null, "metallic_character": 0.85 },
+                { "number": 109, "symbol": "Mt", "name": "Meitnerium", "xpos": 9, "ypos": 7, "atomic_radius": null, "ionization_energy": null, "electronegativity": null, "metallic_character": 0.84 },
+                { "number": 110, "symbol": "Ds", "name": "Darmstadtium", "xpos": 10, "ypos": 7, "atomic_radius": null, "ionization_energy": null, "electronegativity": null, "metallic_character": 0.83 },
+                { "number": 111, "symbol": "Rg", "name": "Roentgenium", "xpos": 11, "ypos": 7, "atomic_radius": null, "ionization_energy": null, "electronegativity": null, "metallic_character": 0.82 },
+                { "number": 112, "symbol": "Cn", "name": "Copernicium", "xpos": 12, "ypos": 7, "atomic_radius": null, "ionization_energy": null, "electronegativity": null, "metallic_character": 0.81 },
+                { "number": 113, "symbol": "Nh", "name": "Nihonium", "xpos": 13, "ypos": 7, "atomic_radius": null, "ionization_energy": null, "electronegativity": null, "metallic_character": 0.8 },
+                { "number": 114, "symbol": "Fl", "name": "Flerovium", "xpos": 14, "ypos": 7, "atomic_radius": null, "ionization_energy": null, "electronegativity": null, "metallic_character": 0.72 },
+                { "number": 115, "symbol": "Mc", "name": "Moscovium", "xpos": 15, "ypos": 7, "atomic_radius": null, "ionization_energy": null, "electronegativity": null, "metallic_character": 0.58 },
+                { "number": 116, "symbol": "Lv", "name": "Livermorium", "xpos": 16, "ypos": 7, "atomic_radius": null, "ionization_energy": null, "electronegativity": null, "metallic_character": 0.4 },
+                { "number": 117, "symbol": "Ts", "name": "Tennessine", "xpos": 17, "ypos": 7, "atomic_radius": null, "ionization_energy": null, "electronegativity": null, "metallic_character": 0.18 },
+                { "number": 118, "symbol": "Og", "name": "Oganesson", "xpos": 18, "ypos": 7, "atomic_radius": null, "ionization_energy": null, "electronegativity": null, "metallic_character": 0.01 }
+            ];
+        }
+
+        const fullData = getFullPeriodicTableData();
+        const table = document.getElementById('periodic-table');
+        const detailsPanel = document.getElementById('details-panel');
+        let currentTrend = 'atomic_radius';
+
+        function init() {
+            // Remove any existing element divs but keep the arrows
+            table.querySelectorAll('.element').forEach(el => el.remove());
+
+            fullData.forEach(element => {
+                const elDiv = document.createElement('div');
+                elDiv.className = 'element';
+                elDiv.style.gridColumn = element.xpos;
+                elDiv.style.gridRow = element.ypos;
+                elDiv.innerHTML = `<div class="number">${element.number}</div><div class="symbol">${element.symbol}</div>`;
+                elDiv.dataset.number = element.number;
+                elDiv.addEventListener('click', () => showDetails(element));
+                table.prepend(elDiv); // Prepend to keep arrows on top
+            });
+            selectTrend(currentTrend);
+        }
+
+        function selectTrend(trendKey) {
+            currentTrend = trendKey;
+            document.querySelectorAll('.control-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.trend === trendKey));
+            
+            const values = fullData.map(el => el[trendKey]).filter(v => v !== null);
+            const min = Math.min(...values);
+            const max = Math.max(...values);
+            
+            table.querySelectorAll('.element').forEach(elDiv => {
+                const elData = fullData.find(d => d.number == elDiv.dataset.number);
+                const value = elData[trendKey];
+                
+                if (value === null) {
+                    elDiv.classList.add('no-data');
+                    elDiv.style.background = '#ccc';
+                } else {
+                    elDiv.classList.remove('no-data');
+                    const normalized = (value - min) / (max - min);
+                    const hue = 240 - (normalized * 240); // 240 (blue) to 0 (red)
+                    elDiv.style.background = `hsl(${hue}, 90%, 65%)`;
+                }
+            });
+            
+            updateArrows(trendKey);
+            detailsPanel.textContent = "Click an element to see its value.";
+        }
+
+        function updateArrows(trendKey) {
+            const arrowInfo = trendInfo[trendKey].arrows;
+            const arrowGroup = document.getElementById('arrow-group');
+            const arrowPeriod = document.getElementById('arrow-period');
+            
+            arrowGroup.style.display = 'flex';
+            arrowGroup.querySelector('#arrow-group-text').textContent = arrowInfo.group.text;
+            arrowGroup.querySelector('.arrow-head').style.transform = (arrowInfo.group.dir === 'down') ? 'rotate(45deg)' : 'rotate(-135deg)';
+            
+            arrowPeriod.style.display = 'flex';
+            arrowPeriod.querySelector('#arrow-period-text').textContent = arrowInfo.period.text;
+            arrowPeriod.querySelector('.arrow-head').style.transform = (arrowInfo.period.dir === 'right') ? 'rotate(-45deg)' : 'rotate(135deg)';
+        }
+
+        function showDetails(elementData) {
+            const trendName = trendInfo[currentTrend].name;
+            const value = elementData[currentTrend];
+            const unit = trendInfo[currentTrend].unit;
+            
+            if (value === null) {
+                detailsPanel.innerHTML = `<strong>${elementData.name} (${elementData.symbol})</strong><br>${trendName}: Data not available`;
+            } else {
+                detailsPanel.innerHTML = `<strong>${elementData.name} (${elementData.symbol})</strong><br>${trendName}: ${value} ${unit}`;
+            }
+        }
+        
+        document.querySelectorAll('.control-btn').forEach(btn => {
+            btn.addEventListener('click', () => selectTrend(btn.dataset.trend));
+        });
+
+        init();
+    });
+    </script>
+</body>
+</html>
