@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chemical Equation Balancer</title>
+    <style>
+        /* --- Basic Page Styles --- */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f0f4f8;
+            color: #333;
+            line-height: 1.6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: #ffffff;
+            padding: 25px 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            max-width: 700px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        h2 {
+            color: #34495e;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 10px;
+            margin-top: 30px;
+        }
+
+        /* --- Explanation Section --- */
+        .explanation {
+            text-align: left;
+            background-color: #eaf2f8;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            border-left: 5px solid #3498db;
+        }
+        
+        .explanation p {
+            margin: 0;
+        }
+        
+        /* --- Simulation Area --- */
+        #equation-display {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2em;
+            font-weight: bold;
+            margin: 30px 0;
+            flex-wrap: wrap; /* Allows wrapping on smaller screens */
+        }
+        
+        .equation-part {
+            margin: 0 8px;
+        }
+
+        .coefficient-input {
+            width: 50px;
+            height: 50px;
+            font-size: 1.2em;
+            text-align: center;
+            border: 2px solid #bdc3c7;
+            border-radius: 6px;
+            margin: 0 5px;
+            transition: border-color 0.3s;
+        }
+
+        .coefficient-input:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        /* --- Atom Counter --- */
+        #atom-counter {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+
+        .counter-side {
+            width: 45%;
+        }
+
+        .atom-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            font-size: 1.2em;
+            transition: background-color 0.4s, color 0.4s;
+        }
+
+        .atom-row.unbalanced {
+            background-color: #fbeae5;
+            color: #c0392b;
+        }
+
+        .atom-row.balanced {
+            background-color: #eafaf1;
+            color: #27ae60;
+        }
+
+        .atom-label {
+            font-weight: bold;
+        }
+
+        /* --- Controls and Messages --- */
+        #success-message {
+            margin-top: 25px;
+            padding: 15px;
+            background-color: #2ecc71;
+            color: white;
+            border-radius: 8px;
+            font-size: 1.2em;
+            font-weight: bold;
+            transition: opacity 0.5s;
+        }
+
+        #next-equation-btn {
+            margin-top: 15px;
+            padding: 12px 25px;
+            font-size: 1em;
+            cursor: pointer;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            transition: background-color 0.3s;
+        }
+
+        #next-equation-btn:hover {
+            background-color: #2980b9;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Chemical Equation Balancer</h1>
+
+        <!-- Explanation for Students -->
+        <div class="explanation">
+            <p><strong>How to Play:</strong> Your goal is to make sure the number of atoms for each element is the same on both sides of the equation. This follows the <strong>Law of Conservation of Mass</strong>, which states that in a chemical reaction, matter is not created or destroyed.</p>
+            <p>Use the boxes to change the coefficients. The "Atom Counter" will update in real-time. When the count for an element is equal on both sides, it will turn green. Balance all the elements to solve the puzzle!</p>
+        </div>
+
+        <!-- Simulation Area -->
+        <div id="simulation-area">
+            <div id="equation-display">
+                <!-- Equation will be dynamically generated here -->
+            </div>
+    
+            <h2>Atom Counter</h2>
+            <div id="atom-counter">
+                <div class="counter-side">
+                    <h3>Reactants (Left Side)</h3>
+                    <div id="reactant-counts"></div>
+                </div>
+                <div class="counter-side">
+                    <h3>Products (Right Side)</h3>
+                    <div id="product-counts"></div>
+                </div>
+            </div>
+    
+            <div id="success-message" class="hidden">
+                🎉 Congratulations! The equation is balanced! 🎉
+            </div>
+    
+            <button id="next-equation-btn">Try Another Equation</button>
+        </div>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- DATA: Define the equations to be balanced ---
+            const equations = [
+                {
+                    reactants: [{ formula: 'Fe', id: 'r1' }, { formula: 'O₂', id: 'r2' }],
+                    products: [{ formula: 'Fe₂O₃', id: 'p1' }],
+                    solution: { r1: 4, r2: 3, p1: 2 }
+                },
+                {
+                    reactants: [{ formula: 'H₂', id: 'r1' }, { formula: 'O₂', id: 'r2' }],
+                    products: [{ formula: 'H₂O', id: 'p1' }],
+                    solution: { r1: 2, r2: 1, p1: 2 }
+                },
+                {
+                    reactants: [{ formula: 'CH₄', id: 'r1' }, { formula: 'O₂', id: 'r2' }],
+                    products: [{ formula: 'CO₂', id: 'p1' }, { formula: 'H₂O', id: 'p2' }],
+                    solution: { r1: 1, r2: 2, p1: 1, p2: 2 }
+                },
+                {
+                    reactants: [{ formula: 'N₂', id: 'r1' }, { formula: 'H₂', id: 'r2' }],
+                    products: [{ formula: 'NH₃', id: 'p1' }],
+                    solution: { r1: 1, r2: 3, p1: 2 }
+                }
+            ];
+
+            let currentEquationIndex = 0;
+
+            // --- DOM Element References ---
+            const equationDisplay = document.getElementById('equation-display');
+            const reactantCountsDiv = document.getElementById('reactant-counts');
+            const productCountsDiv = document.getElementById('product-counts');
+            const successMessage = document.getElementById('success-message');
+            const nextButton = document.getElementById('next-equation-btn');
+
+            // --- CORE LOGIC ---
+
+            /**
+             * Parses a chemical formula string (e.g., 'H₂O') into an atom count object.
+             * @param {string} formula - The chemical formula.
+             * @returns {object} - An object like { H: 2, O: 1 }.
+             */
+            function parseFormula(formula) {
+                const atoms = {};
+                const regex = /([A-Z][a-z]?)(\d*)/g;
+                let match;
+                while ((match = regex.exec(formula)) !== null) {
+                    const element = match[1];
+                    const count = match[2] ? parseInt(match[2], 10) : 1;
+                    atoms[element] = (atoms[element] || 0) + count;
+                }
+                return atoms;
+            }
+            
+            /**
+             * Loads and displays a new equation based on the current index.
+             */
+            function loadEquation() {
+                const equation = equations[currentEquationIndex];
+                successMessage.classList.add('hidden');
+
+                // --- Build Equation Display ---
+                equationDisplay.innerHTML = '';
+                
+                // Reactants
+                equation.reactants.forEach((reactant, index) => {
+                    equationDisplay.innerHTML += `<input type="number" id="${reactant.id}" class="coefficient-input" min="1" placeholder="1"> <span class="equation-part">${reactant.formula}</span>`;
+                    if (index < equation.reactants.length - 1) {
+                        equationDisplay.innerHTML += `<span class="equation-part">+</span>`;
+                    }
+                });
+
+                equationDisplay.innerHTML += `<span class="equation-part">→</span>`;
+
+                // Products
+                equation.products.forEach((product, index) => {
+                    equationDisplay.innerHTML += `<input type="number" id="${product.id}" class="coefficient-input" min="1" placeholder="1"> <span class="equation-part">${product.formula}</span>`;
+                    if (index < equation.products.length - 1) {
+                        equationDisplay.innerHTML += `<span class="equation-part">+</span>`;
+                    }
+                });
+
+                // --- Build Atom Counter Display ---
+                const allElements = new Set();
+                [...equation.reactants, ...equation.products].forEach(compound => {
+                    Object.keys(parseFormula(compound.formula)).forEach(el => allElements.add(el));
+                });
+
+                reactantCountsDiv.innerHTML = '';
+                productCountsDiv.innerHTML = '';
+
+                allElements.forEach(element => {
+                    reactantCountsDiv.innerHTML += `<div id="reactant-${element}" class="atom-row unbalanced"><span class="atom-label">${element}</span><span class="atom-count">0</span></div>`;
+                    productCountsDiv.innerHTML += `<div id="product-${element}" class="atom-row unbalanced"><span class="atom-label">${element}</span><span class="atom-count">0</span></div>`;
+                });
+
+                // Add event listeners to the new inputs
+                document.querySelectorAll('.coefficient-input').forEach(input => {
+                    input.addEventListener('input', updateCounts);
+                });
+
+                updateCounts();
+            }
+
+            /**
+             * Updates atom counts and checks for balance whenever a coefficient is changed.
+             */
+            function updateCounts() {
+                const equation = equations[currentEquationIndex];
+                const reactantAtoms = {};
+                const productAtoms = {};
+
+                // Calculate reactant atoms
+                equation.reactants.forEach(reactant => {
+                    const coefficient = parseInt(document.getElementById(reactant.id).value) || 1;
+                    const atoms = parseFormula(reactant.formula);
+                    for (const element in atoms) {
+                        reactantAtoms[element] = (reactantAtoms[element] || 0) + (atoms[element] * coefficient);
+                    }
+                });
+
+                // Calculate product atoms
+                equation.products.forEach(product => {
+                    const coefficient = parseInt(document.getElementById(product.id).value) || 1;
+                    const atoms = parseFormula(product.formula);
+                    for (const element in atoms) {
+                        productAtoms[element] = (productAtoms[element] || 0) + (atoms[element] * coefficient);
+                    }
+                });
+                
+                // Update the DOM and check for balance
+                let isFullyBalanced = true;
+                const allElements = new Set([...Object.keys(reactantAtoms), ...Object.keys(productAtoms)]);
+
+                allElements.forEach(element => {
+                    const rCount = reactantAtoms[element] || 0;
+                    const pCount = productAtoms[element] || 0;
+                    
+                    const reactantRow = document.getElementById(`reactant-${element}`);
+                    const productRow = document.getElementById(`product-${element}`);
+                    
+                    reactantRow.querySelector('.atom-count').textContent = rCount;
+                    productRow.querySelector('.atom-count').textContent = pCount;
+                    
+                    if (rCount > 0 && rCount === pCount) {
+                        reactantRow.classList.remove('unbalanced');
+                        productRow.classList.remove('unbalanced');
+                        reactantRow.classList.add('balanced');
+                        productRow.classList.add('balanced');
+                    } else {
+                        reactantRow.classList.remove('balanced');
+                        productRow.classList.remove('balanced');
+                        reactantRow.classList.add('unbalanced');
+                        productRow.classList.add('unbalanced');
+                        isFullyBalanced = false;
+                    }
+                });
+                
+                // Show success message if everything is balanced
+                if (isFullyBalanced) {
+                    successMessage.classList.remove('hidden');
+                } else {
+                    successMessage.classList.add('hidden');
+                }
+            }
+            
+            // --- Event Listeners ---
+            nextButton.addEventListener('click', () => {
+                currentEquationIndex = (currentEquationIndex + 1) % equations.length; // Loop back to start
+                loadEquation();
+            });
+
+            // --- Initial Load ---
+            loadEquation();
+        });
+    </script>
+</body>
+</html>
