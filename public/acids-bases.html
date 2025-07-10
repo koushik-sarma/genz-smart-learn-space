@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual pH Lab</title>
+    <style>
+        /* --- Basic Page Styles --- */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #eef2f7;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 25px 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        h1, h2 {
+            text-align: center;
+            color: #2c3e50;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        /* --- Explanation Section --- */
+        .explanation {
+            text-align: left;
+            background-color: #f8f9fa;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            border-left: 5px solid #1abc9c;
+        }
+        .explanation p { margin: 5px 0; }
+
+        /* --- Main Lab Area --- */
+        .lab-bench {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+        }
+
+        .main-lab, .neutralization-station {
+            flex: 1;
+            min-width: 400px;
+        }
+
+        /* --- Test Tube Rack --- */
+        #test-tube-rack {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            background: #d5d8dc;
+            border-radius: 8px;
+        }
+        
+        .test-tube {
+            height: 150px;
+            width: 100%;
+            border: 3px solid #7f8c8d;
+            border-top: none;
+            border-radius: 0 0 25px 25px;
+            position: relative;
+            background-color: #ecf0f1;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .test-tube.active-drop {
+            box-shadow: 0 0 15px 5px #3498db;
+            transform: scale(1.05);
+        }
+
+        .liquid {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 60%;
+            background-color: #a9cce3;
+            border-radius: 0 0 22px 22px;
+            transition: background-color 0.5s;
+        }
+        .substance-label {
+            text-align: center;
+            font-weight: bold;
+            font-size: 0.9em;
+            margin-top: 5px;
+            color: #2c3e50;
+        }
+
+        /* --- Indicator Station --- */
+        .indicator-station {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 25px;
+        }
+
+        .indicator {
+            padding: 10px;
+            border: 2px dashed #95a5a6;
+            border-radius: 8px;
+            text-align: center;
+            cursor: grab;
+            background-color: #fdfefe;
+            font-weight: bold;
+            width: 120px;
+            user-select: none; /* Prevents text selection on drag */
+        }
+        .indicator:active { cursor: grabbing; }
+
+        /* --- Info and pH Meter --- */
+        .info-panel {
+            margin-top: 25px;
+            padding: 15px;
+            background: #ecf0f1;
+            border-radius: 8px;
+            min-height: 150px;
+        }
+
+        .ph-meter {
+            background-color: #7f8c8d;
+            padding: 10px;
+            border-radius: 8px;
+            color: white;
+            text-align: center;
+        }
+        #ph-display {
+            background: #283747;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 2.5em;
+            font-weight: bold;
+            padding: 10px;
+            border-radius: 4px;
+            color: #52d68a;
+            margin-top: 5px;
+        }
+        #info-text {
+            margin-top: 10px;
+            font-size: 1.1em;
+            font-style: italic;
+        }
+
+        /* --- Neutralization Station --- */
+        .neutralization-station {
+            border-left: 2px solid #e0e0e0;
+            padding-left: 30px;
+        }
+        .beaker {
+            width: 150px;
+            height: 180px;
+            border: 4px solid #7f8c8d;
+            border-top: none;
+            margin: 20px auto;
+            position: relative;
+        }
+        .beaker-liquid {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 70%;
+            transition: background-color 0.5s, height 0.5s;
+        }
+        .neutralization-controls {
+            text-align: center;
+        }
+        .neutralization-controls button {
+            padding: 10px 20px;
+            font-size: 1em;
+            cursor: pointer;
+            border: none;
+            border-radius: 6px;
+            margin: 0 5px;
+            background-color: #3498db;
+            color: white;
+            transition: background-color 0.3s;
+        }
+        .neutralization-controls button:hover { background-color: #2980b9; }
+
+        #neutralization-ph-display {
+            text-align: center;
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Virtual pH Lab</h1>
+        <div class="explanation">
+            <p><strong>What is pH?</strong> The pH scale measures how <strong>acidic</strong> or <strong>basic</strong> a substance is. It ranges from 0 to 14. A pH of 7 is <strong>neutral</strong> (like pure water). A pH less than 7 is acidic, and a pH greater than 7 is basic (or alkaline).</p>
+            <p><strong>How to use this lab:</strong>
+                <ol>
+                    <li>Drag an indicator (like Litmus) onto a test tube to see the color change.</li>
+                    <li>The digital meter will show the substance's pH and information about it.</li>
+                    <li>Try the Neutralization simulator to see what happens when you mix an acid and a base!</li>
+                </ol>
+            </p>
+        </div>
+
+        <div class="lab-bench">
+            <!-- Left Side: Main Testing Area -->
+            <div class="main-lab">
+                <h2>Test Your Substances</h2>
+                <div id="test-tube-rack">
+                    <!-- Test tubes will be dynamically generated here -->
+                </div>
+                <div class="indicator-station">
+                    <div id="litmus" class="indicator" draggable="true">Litmus</div>
+                    <div id="phenolphthalein" class="indicator" draggable="true">Phenolphthalein</div>
+                    <div id="universal" class="indicator" draggable="true">Universal Indicator</div>
+                </div>
+                <div class="info-panel">
+                    <div class="ph-meter">
+                        <div id="ph-display">--.-</div>
+                        <span>pH Meter</span>
+                    </div>
+                    <div id="info-text">Select a substance by dragging an indicator to it.</div>
+                </div>
+            </div>
+
+            <!-- Right Side: Neutralization Simulation -->
+            <div class="neutralization-station">
+                <h2>Neutralization Challenge</h2>
+                <div id="neutralization-ph-display">pH: 13.0</div>
+                <div class="beaker">
+                    <div id="beaker-liquid" class="beaker-liquid"></div>
+                </div>
+                <div class="neutralization-controls">
+                    <button id="add-acid-btn">Add Acid (HCl)</button>
+                    <button id="reset-neutralization-btn">Reset</button>
+                </div>
+                <p style="text-align: center; margin-top: 10px;">Start with a base (NaOH) and add an acid (HCl) to neutralize it. Watch the color change as the pH approaches 7!</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+
+        // --- DATA MODEL ---
+        const substances = {
+            hcl: { name: 'Hydrochloric Acid', ph: 1.0, type: 'Strong Acid' },
+            lemon: { name: 'Lemon Juice', ph: 2.3, type: 'Weak Acid' },
+            water: { name: 'Pure Water', ph: 7.0, type: 'Neutral' },
+            baking_soda: { name: 'Baking Soda Solution', ph: 8.5, type: 'Weak Base' },
+            naoh: { name: 'Sodium Hydroxide', ph: 13.0, type: 'Strong Base' },
+        };
+
+        const indicatorColors = {
+            litmus: { acid: '#e74c3c', neutral: '#e74c3c', base: '#3498db' }, // Red for acid, Blue for base
+            phenolphthalein: { acid: 'transparent', neutral: 'transparent', base: '#f000ff' }, // Colorless for acid/neutral, Pink/Fuchsia for base
+            universal: {
+                1: '#d9534f', 2: '#f0ad4e', 3: '#f0ad4e', 4: '#f0ad4e', 5: '#f0ad4e',
+                6: '#f0ad4e', 7: '#5cb85c', 8: '#5bc0de', 9: '#5bc0de', 10: '#5bc0de',
+                11: '#5bc0de', 12: '#428bca', 13: '#428bca', 14: '#428bca'
+            }
+        };
+        
+        // --- DOM ELEMENT REFERENCES ---
+        const testTubeRack = document.getElementById('test-tube-rack');
+        const indicators = document.querySelectorAll('.indicator');
+        const phDisplay = document.getElementById('ph-display');
+        const infoText = document.getElementById('info-text');
+
+        // --- SETUP ---
+        function setupLab() {
+            testTubeRack.innerHTML = '';
+            for (const id in substances) {
+                const substance = substances[id];
+                const tubeContainer = document.createElement('div');
+                tubeContainer.innerHTML = `
+                    <div class="test-tube" data-substance-id="${id}">
+                        <div class="liquid" id="liquid-${id}"></div>
+                    </div>
+                    <div class="substance-label">${substance.name}</div>
+                `;
+                testTubeRack.appendChild(tubeContainer);
+            }
+            addDragDropListeners();
+            resetNeutralization();
+        }
+
+        // --- DRAG AND DROP LOGIC ---
+        function addDragDropListeners() {
+            indicators.forEach(indicator => {
+                indicator.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text/plain', e.target.id);
+                    e.target.style.opacity = '0.5';
+                });
+
+                indicator.addEventListener('dragend', (e) => {
+                    e.target.style.opacity = '1';
+                });
+            });
+
+            document.querySelectorAll('.test-tube').forEach(tube => {
+                tube.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    tube.classList.add('active-drop');
+                });
+
+                tube.addEventListener('dragleave', (e) => {
+                    tube.classList.remove('active-drop');
+                });
+
+                tube.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    tube.classList.remove('active-drop');
+                    const indicatorId = e.dataTransfer.getData('text/plain');
+                    const substanceId = tube.dataset.substanceId;
+                    testSubstance(substanceId, indicatorId);
+                });
+            });
+        }
+
+        // --- CORE SIMULATION LOGIC ---
+        function testSubstance(substanceId, indicatorId) {
+            const substance = substances[substanceId];
+            const liquidEl = document.getElementById(`liquid-${substanceId}`);
+            
+            let color;
+            const substanceType = substance.ph < 7 ? 'acid' : (substance.ph > 7 ? 'base' : 'neutral');
+
+            if (indicatorId === 'universal') {
+                color = indicatorColors.universal[Math.round(substance.ph)];
+            } else {
+                color = indicatorColors[indicatorId][substanceType];
+            }
+            
+            liquidEl.style.backgroundColor = color;
+            phDisplay.textContent = substance.ph.toFixed(1);
+            infoText.innerHTML = `You tested <strong>${substance.name}</strong> (${substance.type}) with <strong>${indicatorId.charAt(0).toUpperCase() + indicatorId.slice(1)}</strong>.`;
+        }
+
+        // --- NEUTRALIZATION LOGIC ---
+        const addAcidBtn = document.getElementById('add-acid-btn');
+        const resetNeutralizationBtn = document.getElementById('reset-neutralization-btn');
+        const beakerLiquid = document.getElementById('beaker-liquid');
+        const neutralizationPhDisplay = document.getElementById('neutralization-ph-display');
+        
+        let neutralizationState = { ph: 13.0, totalVolume: 100 };
+
+        function updateNeutralizationView() {
+            const ph = neutralizationState.ph;
+            neutralizationPhDisplay.textContent = `pH: ${ph.toFixed(1)}`;
+            beakerLiquid.style.backgroundColor = indicatorColors.universal[Math.round(ph)] || '#8e44ad';
+            beakerLiquid.style.height = `${Math.min(95, 70 + (100 - neutralizationState.totalVolume) * 0.2)}%`; // Simulate filling up
+        }
+        
+        function resetNeutralization() {
+            neutralizationState = { ph: 13.0, totalVolume: 100 };
+            updateNeutralizationView();
+        }
+
+        addAcidBtn.addEventListener('click', () => {
+            if (neutralizationState.ph > 1.5) {
+                // This is a simplified model. A real titration curve is logarithmic.
+                // This linear approximation is good enough for a visual demo.
+                neutralizationState.ph -= 0.5;
+                neutralizationState.totalVolume += 5;
+                updateNeutralizationView();
+            }
+        });
+
+        resetNeutralizationBtn.addEventListener('click', resetNeutralization);
+
+        // --- INITIALIZE LAB ---
+        setupLab();
+    });
+    </script>
+</body>
+</html>
