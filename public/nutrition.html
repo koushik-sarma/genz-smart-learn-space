@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chapter 1: Nutrition - The Digestive System Assembly Line</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 20px; background-color: #f4f4f4; color: #333; }
+        .container { max-width: 800px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1, h2 { color: #2c3e50; text-align: center; }
+        .step { display: none; padding: 20px; border: 1px dashed #3498db; margin-top: 20px; border-radius: 5px; background-color: #ecf0f1; }
+        .step.active { display: block; }
+        .step h3 { margin-top: 0; color: #3498db; }
+        .controls { text-align: center; margin-top: 20px; }
+        button { background-color: #3498db; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        button:hover { background-color: #2980b9; }
+        #completionMessage { color: #27ae60; font-weight: bold; font-size: 1.2em; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Chapter 1: Nutrition Simulation</h1>
+        <h2>The Digestive System Assembly Line</h2>
+        <p>Click the "Start" or "Next Step" button to see how food travels through your digestive system and gets broken down.</p>
+
+        <div id="simulation-area">
+            <div id="step-0" class="step active">
+                <h3>Ready to Eat!</h3>
+                <p>Imagine a piece of food, like a chapati. Let's see what happens to it. Click "Start" to begin the journey.</p>
+            </div>
+            <div id="step-1" class="step">
+                <h3>1. The Mouth 👄</h3>
+                <p><b>Mechanical Digestion:</b> Your teeth (✂️) cut, tear, and grind the food into small pieces. This is called mastication.<br><b>Chemical Digestion:</b> Saliva mixes with the food. An enzyme called <b>salivary amylase</b> starts breaking down complex carbohydrates (starch) into simpler sugars.</p>
+            </div>
+            <div id="step-2" class="step">
+                <h3>2. The Oesophagus (Food Pipe)</h3>
+                <p>The tongue pushes the chewed food, now called a 'bolus', to the back of the throat. It then travels down the oesophagus through a wave-like muscular movement called <b>peristalsis</b>. It's like squeezing a tube to push something along!</p>
+            </div>
+            <div id="step-3" class="step">
+                <h3>3. The Stomach 🌀</h3>
+                <p>The food enters the stomach, a muscular bag. The stomach walls release <b>gastric juice</b>, which contains strong <b>hydrochloric acid (HCl)</b> and an enzyme called <b>pepsin</b>.<br><b>Action:</b> The acid kills harmful bacteria, and pepsin begins the digestion of proteins. The stomach churns everything into a semi-liquid paste called 'chyme'.</p>
+            </div>
+            <div id="step-4" class="step">
+                <h3>4. The Small Intestine (Major Digestion & Absorption)</h3>
+                <p>The chyme enters the small intestine. Here, it mixes with juices from three sources:<br><b>• Pancreas:</b> Adds enzymes to digest carbohydrates, fats, and proteins.<br><b>• Liver:</b> Produces <b>bile</b>, which helps break large fat globules into smaller ones (emulsification).<br><b>• Intestinal Wall:</b> Secretes more enzymes to complete digestion. Now, the nutrients are ready to be absorbed into the blood through tiny finger-like projections called <b>villi</b>.</p>
+            </div>
+             <div id="step-5" class="step">
+                <h3>5. The Large Intestine</h3>
+                <p>The leftover material, which is mostly undigested food and water, moves into the large intestine. The main job here is to absorb most of the remaining water back into the body.</p>
+            </div>
+            <div id="step-6" class="step">
+                <h3>6. Rectum and Anus (Elimination)</h3>
+                <p>The solid waste, now called feces, is stored in the rectum and finally eliminated from the body through the anus.<br><span id="completionMessage">The journey is complete!</span></p>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button id="controlButton" onclick="nextStep()">Start</button>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 0;
+        const totalSteps = 6;
+
+        function showStep(stepNumber) {
+            // Hide all steps
+            document.querySelectorAll('.step').forEach(step => {
+                step.classList.remove('active');
+            });
+            // Show the current step
+            document.getElementById(`step-${stepNumber}`).classList.add('active');
+        }
+
+        function nextStep() {
+            if (currentStep < totalSteps) {
+                currentStep++;
+                showStep(currentStep);
+                document.getElementById('controlButton').innerText = "Next Step";
+            } 
+            
+            if (currentStep === totalSteps) {
+                document.getElementById('controlButton').innerText = "Restart";
+            } else if (currentStep > totalSteps) {
+                currentStep = 0;
+                showStep(0);
+                 document.getElementById('controlButton').innerText = "Start";
+            }
+        }
+    </script>
+</body>
+</html>

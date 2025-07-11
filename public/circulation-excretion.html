@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chapter 3 & 4: Circulation & Excretion Simulation</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 20px; background-color: #f4f4f4; color: #333; }
+        .container { max-width: 900px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1, h2 { text-align: center; color: #c0392b; }
+        .tab { overflow: hidden; border-bottom: 1px solid #ccc; background-color: #f1f1f1; border-radius: 8px 8px 0 0;}
+        .tab button { background-color: inherit; float: left; border: none; outline: none; cursor: pointer; padding: 14px 16px; transition: 0.3s; font-size: 17px; }
+        .tab button:hover { background-color: #ddd; }
+        .tab button.active { background-color: #c0392b; color: white; }
+        .tabcontent { display: none; padding: 20px; border: 1px solid #ccc; border-top: none; border-radius: 0 0 8px 8px; }
+        .sim-controls button { background-color: #e74c3c; color: white; padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; margin: 5px; }
+        .sim-controls button:hover { background-color: #c0392b; }
+        #circulation-diagram { position: relative; width: 500px; height: 400px; margin: 20px auto; background-image: url('https://i.imgur.com/gY8fSCp.png'); background-size: contain; background-repeat: no-repeat; background-position: center;}
+        #blood-cell { width: 20px; height: 20px; border-radius: 50%; position: absolute; transition: top 1s ease-in-out, left 1s ease-in-out, background-color 0.5s; }
+        .nephron-container { text-align: center; }
+        .nephron-step { margin: 10px 0; }
+        #nephron-fluid { padding: 10px; background: #ecf0f1; border-radius: 5px; margin-top: 20px; min-height: 50px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Chapter 3 & 4: Circulation & Excretion</h1>
+
+        <div class="tab">
+            <button class="tablinks active" onclick="openTab(event, 'Circulation')">Double Circulation</button>
+            <button class="tablinks" onclick="openTab(event, 'Excretion')">The Nephron Factory</button>
+        </div>
+
+        <div id="Circulation" class="tabcontent" style="display: block;">
+            <h2>The Blood Cell Journey</h2>
+            <p>Click to trace the path of a single blood cell through both the pulmonary (to the lungs) and systemic (to the body) circuits.</p>
+            <div id="circulation-diagram">
+                <div id="blood-cell"></div>
+            </div>
+            <div class="sim-controls" style="text-align:center;">
+                <button onclick="startJourney()">Start Full Journey</button>
+                <button onclick="resetJourney()">Reset</button>
+            </div>
+            <p id="journeyStatus" style="text-align:center; font-weight:bold;">Status: Ready to go!</p>
+        </div>
+
+        <div id="Excretion" class="tabcontent">
+            <h2>The Nephron Factory: Making Urine</h2>
+            <p>See how the kidney filters blood to remove waste. Click the buttons in order.</p>
+            <div class="nephron-container">
+                <div class="sim-controls">
+                    <button onclick="runFiltration()">1. Glomerular Filtration</button>
+                    <button onclick="runReabsorption()">2. Tubular Reabsorption</button>
+                    <button onclick="runExcretion()">3. Excretion</button>
+                </div>
+                <div id="nephron-fluid">
+                    <h4>Composition of Fluid in the Tubule:</h4>
+                    <p id="fluidContents">Waiting for filtration...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openTab(evt, tabName) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            tablinks = document.getElementsByClassName("tablinks");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }
+        
+        // Circulation Logic
+        const cell = document.getElementById('blood-cell');
+        const status = document.getElementById('journeyStatus');
+        const journeySteps = [
+            { top: '75%', left: '70%', color: '#3498db', text: 'Deoxygenated blood from the body...' }, // Start Body
+            { top: '55%', left: '45%', color: '#3498db', text: '...enters the Right Atrium...' }, // Right Atrium
+            { top: '75%', left: '45%', color: '#3498db', text: '...then the Right Ventricle.' }, // Right Ventricle
+            { top: '10%', left: '48%', color: '#e74c3c', text: 'Pumped to the Lungs! Picking up oxygen...' }, // Lungs (color change)
+            { top: '55%', left: '25%', color: '#e74c3c', text: '...returns to the Left Atrium...' }, // Left Atrium
+            { top: '75%', left: '25%', color: '#e74c3c', text: '...then the Left Ventricle.' }, // Left Ventricle
+            { top: '15%', left: '15%', color: '#e74c3c', text: 'Pumped to the Body! Delivering oxygen...' }, // Out to body
+            { top: '75%', left: '70%', color: '#3498db', text: 'Journey complete! Ready for another loop.' }, // Back to body (color change)
+        ];
+
+        function resetJourney() {
+            moveCell(0);
+        }
+
+        function moveCell(stepIndex) {
+            if (stepIndex >= journeySteps.length) return;
+            const step = journeySteps[stepIndex];
+            cell.style.top = step.top;
+            cell.style.left = step.left;
+            cell.style.backgroundColor = step.color;
+            status.innerText = step.text;
+        }
+
+        function startJourney() {
+            resetJourney();
+            let delay = 0;
+            for (let i = 0; i < journeySteps.length; i++) {
+                setTimeout(() => moveCell(i), delay);
+                delay += 1500;
+            }
+        }
+        
+        // Excretion Logic
+        const fluidContents = document.getElementById('fluidContents');
+        function runFiltration() {
+            fluidContents.innerHTML = "<b>Initial Filtrate:</b><br>Lots of Water, Useful Glucose, Useful Salts, and Waste Urea.<br><br><i>(Large proteins and blood cells are too big to be filtered and stay in the blood).</i>";
+        }
+        function runReabsorption() {
+             fluidContents.innerHTML = "<b>After Reabsorption:</b><br>Some Water, Some Salts, and all the Waste Urea remain.<br><br><i>(All Glucose, most of the Water, and needed Salts are taken back into the blood).</i>";
+        }
+        function runExcretion() {
+            fluidContents.innerHTML = "<b>Final Urine Excreted:</b><br>A small amount of Water, excess Salts, and all the Urea.<br><br><i>The body has kept the good stuff and gotten rid of the waste!</i>";
+        }
+
+        // Initialize
+        document.addEventListener("DOMContentLoaded", () => {
+            resetJourney();
+        });
+    </script>
+</body>
+</html>

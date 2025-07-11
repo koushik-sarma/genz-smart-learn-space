@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chapter 6, 8, 9 & 10: Heredity & Environment Simulation</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 20px; background-color: #f4f4f4; color: #333; }
+        .container { max-width: 900px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1, h2 { text-align: center; color: #8e44ad; }
+        .tab { overflow: hidden; border-bottom: 1px solid #ccc; background-color: #f1f1f1; border-radius: 8px 8px 0 0;}
+        .tab button { background-color: inherit; float: left; border: none; outline: none; cursor: pointer; padding: 14px 16px; transition: 0.3s; font-size: 17px; }
+        .tab button:hover { background-color: #ddd; }
+        .tab button.active { background-color: #8e44ad; color: white; }
+        .tabcontent { display: none; padding: 20px; border: 1px solid #ccc; border-top: none; border-radius: 0 0 8px 8px; }
+        .sim-controls button { background-color: #9b59b6; color: white; padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; margin: 5px; }
+        .sim-controls button:hover { background-color: #8e44ad; }
+        .flex-container { display: flex; justify-content: space-around; text-align: center; }
+        .column { padding: 10px; border: 1px solid #ccc; border-radius: 5px; width: 48%; }
+        .cell-division-area { min-height: 150px; border: 2px solid #ecf0f1; padding: 10px; margin-top: 10px; }
+        .chromosome { display: inline-block; width: 10px; height: 40px; border-radius: 5px; margin: 2px; }
+        .habitat { height: 300px; border: 2px dashed #2ecc71; background: #f0fff0; position: relative; cursor: crosshair; }
+        .food-item { width: 15px; height: 15px; position: absolute; }
+        .pyramid-level { background: #f39c12; border: 1px solid #e67e22; padding: 10px; margin: 5px auto; width: 80%; text-align: center; border-radius: 5px;}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Heredity & Environment Simulations</h1>
+
+        <div class="tab">
+            <button class="tablinks active" onclick="openTab(event, 'CellDivision')">Cell Division</button>
+            <button class="tablinks" onclick="openTab(event, 'Selection')">Natural Selection</button>
+            <button class="tablinks" onclick="openTab(event, 'Ecology')">Ecology & Resources</button>
+        </div>
+
+        <div id="CellDivision" class="tabcontent" style="display: block;">
+            <h2>The Chromosome Dance: Mitosis vs. Meiosis</h2>
+            <div class="flex-container">
+                <div class="column">
+                    <h3>Mitosis (for Growth & Repair)</h3>
+                    <p>Creates two identical daughter cells.</p>
+                    <div class="sim-controls"><button onclick="runMitosis()">Run Mitosis</button></div>
+                    <div class="cell-division-area" id="mitosisArea"></div>
+                    <p id="mitosisStatus"></p>
+                </div>
+                <div class="column">
+                    <h3>Meiosis (for Gametes)</h3>
+                    <p>Creates four unique cells with half the chromosomes.</p>
+                    <div class="sim-controls"><button onclick="runMeiosis()">Run Meiosis</button></div>
+                    <div class="cell-division-area" id="meiosisArea"></div>
+                    <p id="meiosisStatus"></p>
+                </div>
+            </div>
+        </div>
+
+        <div id="Selection" class="tabcontent">
+            <h2>Survival of the Fittest Beetles</h2>
+            <p>A population of red beetles lives on green leaves. Click "Introduce Green Beetle" to see how variation and natural selection work when crows start hunting them.</p>
+            <div id="beetleHabitat" style="padding: 10px; border: 1px solid #ccc;"></div>
+            <div class="sim-controls" style="text-align: center;">
+                <button onclick="introduceVariation()">Introduce Green Beetle (Variation)</button>
+                <button onclick="crowsHunt()">Crows Hunt! (Natural Selection)</button>
+                <button onclick="resetBeetles()">Reset Population</button>
+            </div>
+        </div>
+        
+        <div id="Ecology" class="tabcontent">
+            <h2>Biomagnification & Shared Resources</h2>
+            <div class="column" style="width:95%; margin:auto;">
+                <h3>The Toxin Pyramid</h3>
+                <p>One unit of a non-degradable toxin enters the ecosystem. Let's see where it ends up.</p>
+                <div id="pyramid">
+                    <div class="pyramid-level" id="level4">🦅 Eagle: <span id="eagleToxin">0</span> Toxin</div>
+                    <div class="pyramid-level" id="level3">🐟 Large Fish (eats 2 small fish): <span id="lfishToxin">0</span> Toxin</div>
+                    <div class="pyramid-level" id="level2">🐠 Small Fish (eats 3 plankton): <span id="sfishToxin">0</span> Toxin</div>
+                    <div class="pyramid-level" id="level1">💧 Plankton: <span id="planktonToxin">0</span> Toxin</div>
+                </div>
+                <div class="sim-controls" style="text-align:center;"><button onclick="runBiomagnification()">Run Toxin Simulation</button></div>
+            </div>
+             <div class="column" style="width:95%; margin:auto; margin-top:20px;">
+                <h3>The Fishing Game</h3>
+                <p>You are one of 4 fishing villages. There are 20 fish in the lake. The fish double each year, but can't exceed 20. How will you fish?</p>
+                <p><b>Fish in Lake: <span id="fishCount">20</span></b> | <b>Your Catch: <span id="playerCatch">0</span></b> | <b>Year: <span id="yearCount">1</span></b></p>
+                <div class="sim-controls" style="text-align:center;">
+                    <button onclick="takeFish(1)">Take 1 Fish</button>
+                    <button onclick="takeFish(2)">Take 2 Fish</button>
+                    <button onclick="takeFish(3)">Take 3 Fish</button>
+                    <button onclick="resetFishing()">Reset Game</button>
+                </div>
+                <p id="fishingLog" style="height: 60px; overflow-y: auto; background: #eee; padding: 5px;"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openTab(evt, tabName) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            tablinks = document.getElementsByClassName("tablinks");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }
+        
+        // Cell Division Logic (Simplified Animation)
+        function runMitosis() {
+            const area = document.getElementById('mitosisArea');
+            const status = document.getElementById('mitosisStatus');
+            area.innerHTML = '';
+            status.innerText = "Parent Cell (2n=4)";
+            area.innerHTML += `<div class="chromosome" style="background:red;"></div><div class="chromosome" style="background:red;"></div> <div class="chromosome" style="background:blue;"></div><div class="chromosome" style="background:blue;"></div>`;
+            setTimeout(() => {
+                status.innerText = "Prophase/Metaphase: Chromosomes duplicate and align.";
+                area.innerHTML = `(<div class="chromosome" style="background:red;"></div><div class="chromosome" style="background:red;"></div>) (<div class="chromosome" style="background:red;"></div><div class="chromosome" style="background:red;"></div>) (<div class="chromosome" style="background:blue;"></div><div class="chromosome" style="background:blue;"></div>) (<div class="chromosome" style="background:blue;"></div><div class="chromosome" style="background:blue;"></div>)`;
+            }, 1500);
+            setTimeout(() => {
+                status.innerText = "Anaphase/Telophase: Chromosomes separate.";
+            }, 3000);
+            setTimeout(() => {
+                status.innerText = "Result: Two identical daughter cells (2n=4)";
+                area.innerHTML = `<div style="border:1px solid #333; padding:5px; display:inline-block; margin-right:10px;"><div class="chromosome" style="background:red;"></div><div class="chromosome" style="background:red;"></div> <div class="chromosome" style="background:blue;"></div><div class="chromosome" style="background:blue;"></div></div>  <div style="border:1px solid #333; padding:5px; display:inline-block;"><div class="chromosome" style="background:red;"></div><div class="chromosome" style="background:red;"></div> <div class="chromosome" style="background:blue;"></div><div class="chromosome" style="background:blue;"></div></div>`;
+            }, 4500);
+        }
+        function runMeiosis() {
+            const area = document.getElementById('meiosisArea');
+            const status = document.getElementById('meiosisStatus');
+            area.innerHTML = '';
+            status.innerText = "Parent Cell (2n=4)";
+             area.innerHTML += `<div class="chromosome" style="background:red;"></div><div class="chromosome" style="background:red;"></div> <div class="chromosome" style="background:blue;"></div><div class="chromosome" style="background:blue;"></div>`;
+            setTimeout(() => {
+                 status.innerText = "Meiosis I: Homologous pairs separate.";
+                 area.innerHTML = `<div style="border:1px solid #333; padding:5px; display:inline-block; margin-right:10px;">(<div class="chromosome" style="background:red;"></div><div class="chromosome" style="background:red;"></div>) (<div class="chromosome" style="background:red;"></div><div class="chromosome" style="background:red;"></div>)</div> <div style="border:1px solid #333; padding:5px; display:inline-block;">(<div class="chromosome" style="background:blue;"></div><div class="chromosome" style="background:blue;"></div>) (<div class="chromosome" style="background:blue;"></div><div class="chromosome" style="background:blue;"></div>)</div>`;
+            }, 1500);
+             setTimeout(() => {
+                 status.innerText = "Meiosis II: Sister chromatids separate.";
+            }, 3000);
+            setTimeout(() => {
+                 status.innerText = "Result: Four unique gamete cells (n=2)";
+                 area.innerHTML = `<div style="border:1px solid #333; padding:5px; display:inline-block; margin:2px;"><div class="chromosome" style="background:red;"></div> <div class="chromosome" style="background:blue;"></div></div>`.repeat(4);
+            }, 4500);
+        }
+
+        // Natural Selection Logic
+        const beetleHabitat = document.getElementById('beetleHabitat');
+        let beetles = [];
+        function resetBeetles() {
+            beetles = Array(12).fill('red');
+            renderBeetles();
+        }
+        function renderBeetles() {
+            beetleHabitat.innerHTML = '';
+            beetles.forEach(color => {
+                beetleHabitat.innerHTML += `<span style="color:${color}; font-size:24px; margin:2px;">●</span>`;
+            });
+            beetleHabitat.innerHTML += `<p>Population: ${beetles.length} (${beetles.filter(c=>c==='red').length} Red, ${beetles.filter(c=>c==='green').length} Green)</p>`;
+        }
+        function introduceVariation() {
+            if (beetles.length > 0) {
+                beetles[Math.floor(Math.random() * beetles.length)] = 'green';
+            }
+            renderBeetles();
+        }
+        function crowsHunt() {
+            // Crows preferentially eat red beetles because they are visible
+            const redBeetles = beetles.filter(c => c === 'red').length;
+            const toRemove = Math.min(redBeetles, Math.ceil(beetles.length / 4)); // Remove up to a quarter of the population, but only reds
+            for (let i = 0; i < toRemove; i++) {
+                const redIndex = beetles.indexOf('red');
+                if (redIndex > -1) beetles.splice(redIndex, 1);
+            }
+            // Progeny reproduce
+            let currentGreen = beetles.filter(c => c === 'green').length;
+            let currentRed = beetles.filter(c => c === 'red').length;
+            for(let i=0; i<currentGreen; i++) beetles.push('green'); // Green beetles reproduce
+            for(let i=0; i<currentRed; i++) beetles.push('red'); // Red beetles reproduce
+            renderBeetles();
+        }
+
+        // Ecology Logic
+        function runBiomagnification() {
+            document.getElementById('planktonToxin').innerText = '1';
+            setTimeout(() => document.getElementById('sfishToxin').innerText = '3', 1000);
+            setTimeout(() => document.getElementById('lfishToxin').innerText = '6', 2000);
+            setTimeout(() => document.getElementById('eagleToxin').innerText = '6', 3000);
+        }
+        
+        let fish = 20, player = 0, year = 1;
+        const fishCountEl = document.getElementById('fishCount');
+        const playerCatchEl = document.getElementById('playerCatch');
+        const yearCountEl = document.getElementById('yearCount');
+        const fishingLogEl = document.getElementById('fishingLog');
+        function takeFish(num) {
+            if (fish <= 0) {
+                fishingLogEl.innerHTML += "The lake is empty!<br>";
+                return;
+            }
+            const actualTaken = Math.min(fish, num);
+            player += actualTaken;
+            fish -= actualTaken;
+            
+            // Computer players
+            let computerTaken = 0;
+            for(let i=0; i<3; i++) {
+                let take = Math.min(fish, 2); // Computers are moderately greedy
+                computerTaken += take;
+                fish -= take;
+            }
+
+            fishingLogEl.innerHTML += `Year ${year}: You took ${actualTaken}. Others took ${computerTaken}.<br>`;
+            
+            // Next Year
+            year++;
+            fish = Math.min(20, fish * 2); // Reproduce
+            
+            updateFishingUI();
+            if (fish <= 0) fishingLogEl.innerHTML += "<b>The fishery has collapsed! Game Over.</b><br>";
+        }
+        function updateFishingUI() {
+            fishCountEl.innerText = fish;
+            playerCatchEl.innerText = player;
+            yearCountEl.innerText = year;
+        }
+        function resetFishing() {
+            fish = 20; player = 0; year = 1;
+            fishingLogEl.innerHTML = "";
+            updateFishingUI();
+        }
+
+        // Initialize
+        document.addEventListener("DOMContentLoaded", () => {
+            resetBeetles();
+        });
+
+    </script>
+</body>
+</html>
