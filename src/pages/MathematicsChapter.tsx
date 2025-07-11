@@ -37,9 +37,9 @@ export default function MathematicsChapterPage() {
     try {
       // Fetch chapter information
       const { data: chapterData, error: chapterError } = await supabase
-        .from('dim_maths_subject')
+        .from('dim_mathematics_subject')
         .select('*')
-        .eq('maths_chapter_id', parseInt(chapterId))
+        .eq('math_chapter_id', parseInt(chapterId))
         .single();
 
       if (chapterError) throw chapterError;

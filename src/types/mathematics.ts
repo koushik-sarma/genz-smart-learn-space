@@ -12,7 +12,7 @@ export interface MathematicsChapterNotes {
 }
 
 export interface MathematicsChapter {
-  maths_chapter_id: number;
+  math_chapter_id: number;
   chapter: string;
   chapter_description: string;
   part: string | null;
