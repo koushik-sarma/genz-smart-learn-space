@@ -55,30 +55,30 @@ export type Database = {
       }
       dim_biology_subject: {
         Row: {
+          biology_chapter_id: number
           board_id: number
           chapter: string
           chapter_description: string
           class: number
           part: string | null
-          physic_biology_id: number
           subject_id: number
         }
         Insert: {
+          biology_chapter_id?: number
           board_id: number
           chapter: string
           chapter_description: string
           class: number
           part?: string | null
-          physic_biology_id?: number
           subject_id: number
         }
         Update: {
+          biology_chapter_id?: number
           board_id?: number
           chapter?: string
           chapter_description?: string
           class?: number
           part?: string | null
-          physic_biology_id?: number
           subject_id?: number
         }
         Relationships: []
@@ -198,6 +198,75 @@ export type Database = {
           chapter_description?: string
           class?: number
           math_chapter_id?: number
+          part?: string | null
+          subject_id?: number
+        }
+        Relationships: []
+      }
+      dim_maths_chapters_notes: {
+        Row: {
+          board_id: number
+          chapter_discussion_points: string
+          chapter_formulae: string
+          chapter_id: number
+          chapter_important_diagrams: string
+          chapter_quick_recall: string | null
+          chapter_summary: string
+          chapter_takeaways: string
+          maths_notes_id: number
+          subject_id: number
+        }
+        Insert: {
+          board_id: number
+          chapter_discussion_points: string
+          chapter_formulae: string
+          chapter_id: number
+          chapter_important_diagrams: string
+          chapter_quick_recall?: string | null
+          chapter_summary: string
+          chapter_takeaways: string
+          maths_notes_id?: number
+          subject_id: number
+        }
+        Update: {
+          board_id?: number
+          chapter_discussion_points?: string
+          chapter_formulae?: string
+          chapter_id?: number
+          chapter_important_diagrams?: string
+          chapter_quick_recall?: string | null
+          chapter_summary?: string
+          chapter_takeaways?: string
+          maths_notes_id?: number
+          subject_id?: number
+        }
+        Relationships: []
+      }
+      dim_maths_subject: {
+        Row: {
+          board_id: number
+          chapter: string
+          chapter_description: string
+          class: number
+          maths_chapter_id: number
+          part: string | null
+          subject_id: number
+        }
+        Insert: {
+          board_id: number
+          chapter: string
+          chapter_description: string
+          class: number
+          maths_chapter_id?: number
+          part?: string | null
+          subject_id: number
+        }
+        Update: {
+          board_id?: number
+          chapter?: string
+          chapter_description?: string
+          class?: number
+          maths_chapter_id?: number
           part?: string | null
           subject_id?: number
         }

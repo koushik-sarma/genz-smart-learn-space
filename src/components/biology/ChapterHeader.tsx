@@ -27,7 +27,7 @@ export default function ChapterHeader({ chapter }: ChapterHeaderProps) {
           <Leaf className="h-8 w-8 text-white" />
         </div>
         <div className="text-white">
-          <div className="text-sm text-green-300">Chapter {chapter.physic_biology_id}</div>
+          <div className="text-sm text-green-300">Chapter {chapter.biology_chapter_id}</div>
           <h1 className="text-3xl font-bold">{chapter.chapter}</h1>
           <p className="text-gray-300">{chapter.chapter_description}</p>
         </div>

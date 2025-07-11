@@ -370,6 +370,8 @@ export default function Dashboard() {
                           navigate('/chemistry');
                         } else if (subject.subject_name === 'Biology') {
                           navigate('/biology');
+                        } else if (subject.subject_name === 'Mathematics') {
+                          navigate('/mathematics');
                         }
                       }}
                     >

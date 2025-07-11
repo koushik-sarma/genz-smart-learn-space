@@ -1,9 +1,9 @@
-export interface BiologyChapterNotes {
-  biology_notes_id: number;
+export interface MathematicsChapterNotes {
+  maths_notes_id: number;
   chapter_summary: string;
   chapter_takeaways: string;
   chapter_discussion_points: string;
-  chapter_points_to_remember: string;
+  chapter_formulae: string;
   chapter_quick_recall: string;
   chapter_important_diagrams: string;
   chapter_id: number;
@@ -11,8 +11,8 @@ export interface BiologyChapterNotes {
   subject_id: number;
 }
 
-export interface BiologyChapter {
-  biology_chapter_id: number;
+export interface MathematicsChapter {
+  maths_chapter_id: number;
   chapter: string;
   chapter_description: string;
   part: string | null;

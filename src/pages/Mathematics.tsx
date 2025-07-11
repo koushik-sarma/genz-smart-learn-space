@@ -3,12 +3,12 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Leaf } from 'lucide-react';
+import { ArrowLeft, Calculator } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 
-interface BiologyChapter {
-  biology_chapter_id: number;
+interface MathematicsChapter {
+  maths_chapter_id: number;
   chapter: string;
   chapter_description: string;
   part: string | null;
@@ -17,21 +17,21 @@ interface BiologyChapter {
   subject_id: number;
 }
 
-export default function Biology() {
+export default function Mathematics() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [chapters, setChapters] = useState<BiologyChapter[]>([]);
+  const [chapters, setChapters] = useState<MathematicsChapter[]>([]);
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (user) {
-      fetchBiologyData();
+      fetchMathematicsData();
     }
   }, [user]);
 
-  const fetchBiologyData = async () => {
+  const fetchMathematicsData = async () => {
     if (!user) return;
 
     try {
@@ -54,32 +54,32 @@ export default function Biology() {
 
       if (boardError) throw boardError;
 
-      // Get the subject_id for Biology
+      // Get the subject_id for Mathematics
       const { data: subjectData, error: subjectError } = await supabase
         .from('dim_subjects')
         .select('subject_id')
-        .eq('subject_name', 'Biology')
+        .eq('subject_name', 'Mathematics')
         .eq('class', parseInt(profileData.class))
         .eq('board_name', profileData.board_of_education)
         .single();
 
       if (subjectError) throw subjectError;
 
-      // Fetch biology chapters based on user's class, board, and subject
+      // Fetch mathematics chapters based on user's class, board, and subject
       const { data: chaptersData, error: chaptersError } = await supabase
-        .from('dim_biology_subject')
+        .from('dim_maths_subject')
         .select('*')
         .eq('class', parseInt(profileData.class))
         .eq('board_id', boardData.board_id)
         .eq('subject_id', subjectData.subject_id)
-        .order('biology_chapter_id');
+        .order('maths_chapter_id');
 
       if (chaptersError) throw chaptersError;
       setChapters(chaptersData || []);
 
     } catch (error: any) {
       toast({
-        title: "Error loading biology chapters",
+        title: "Error loading mathematics chapters",
         description: error.message,
         variant: "destructive"
       });
@@ -90,14 +90,14 @@ export default function Biology() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-green-900 to-slate-900">
-        <div className="text-white text-lg">Loading biology chapters...</div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+        <div className="text-white text-lg">Loading mathematics chapters...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-green-900 to-slate-900">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
       <div className="absolute inset-0 bg-gradient-hero opacity-40 animate-gradient bg-[length:400%_400%]"></div>
       
       <div className="relative z-10 p-6">
@@ -115,10 +115,10 @@ export default function Biology() {
           
           <div className="flex items-center gap-3">
             <div className="p-2 bg-gradient-primary rounded-xl shadow-glow">
-              <Leaf className="h-8 w-8 text-white" />
+              <Calculator className="h-8 w-8 text-white" />
             </div>
             <div className="text-white">
-              <h1 className="text-3xl font-bold">Biology</h1>
+              <h1 className="text-3xl font-bold">Mathematics</h1>
               <p className="text-gray-300">Class {profile?.class} • {profile?.board_of_education}</p>
             </div>
           </div>
@@ -127,9 +127,9 @@ export default function Biology() {
         {/* Chapters Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {chapters.map((chapter) => (
-            <Card key={chapter.biology_chapter_id} className="bg-white/10 backdrop-blur-xl border-white/20 hover:bg-white/15 transition-all cursor-pointer">
+            <Card key={chapter.maths_chapter_id} className="bg-white/10 backdrop-blur-xl border-white/20 hover:bg-white/15 transition-all cursor-pointer">
               <CardHeader>
-                <div className="text-sm text-green-300 mb-2">Chapter {chapter.biology_chapter_id}</div>
+                <div className="text-sm text-purple-300 mb-2">Chapter {chapter.maths_chapter_id}</div>
                 <CardTitle className="text-white text-lg">{chapter.chapter}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -138,7 +138,7 @@ export default function Biology() {
                 </div>
                 
                 {chapter.part && (
-                  <div className="text-xs text-green-300 bg-green-500/20 px-2 py-1 rounded-full inline-block">
+                  <div className="text-xs text-purple-300 bg-purple-500/20 px-2 py-1 rounded-full inline-block">
                     Part: {chapter.part}
                   </div>
                 )}
@@ -147,7 +147,7 @@ export default function Biology() {
                   <Button 
                     size="sm" 
                     className="bg-gradient-primary hover:shadow-glow transition-all duration-300"
-                    onClick={() => navigate(`/biology/chapter/${chapter.biology_chapter_id}`)}
+                    onClick={() => navigate(`/mathematics/chapter/${chapter.maths_chapter_id}`)}
                   >
                     Start Learning
                   </Button>
@@ -162,7 +162,7 @@ export default function Biology() {
             <CardContent>
               <div className="text-white text-lg mb-2">No chapters found</div>
               <div className="text-gray-300">
-                Biology chapters for your class and board will appear here once they're available.
+                Mathematics chapters for your class and board will appear here once they're available.
               </div>
             </CardContent>
           </Card>
