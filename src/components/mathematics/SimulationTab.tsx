@@ -1,6 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { ExternalLink, Play } from 'lucide-react';
+import { Play } from 'lucide-react';
 import { MathematicsChapter } from '@/types/mathematics';
 
 interface SimulationTabProps {
@@ -24,7 +23,8 @@ export function SimulationTab({ chapter }: SimulationTabProps) {
       'Areas Related to Circles': 'mensuration.html',
       'Surface Areas and Volumes': 'mensuration.html',
       'Statistics': 'Statistics.html',
-      'Probability': 'probability.html'
+      'Probability': 'probability.html',
+      'Sets': 'venn-diagrams.html'
     };
     
     return simulations[chapterName] || null;
@@ -32,67 +32,63 @@ export function SimulationTab({ chapter }: SimulationTabProps) {
 
   const simulationFile = getSimulationFile(chapter.chapter);
 
-  const handleOpenSimulation = () => {
-    if (simulationFile) {
-      window.open(`/${simulationFile}`, '_blank');
-    }
-  };
-
   return (
     <div className="space-y-6">
-      <Card className="bg-white/10 backdrop-blur-xl border-white/20">
-        <CardHeader>
-          <CardTitle className="text-white flex items-center gap-2">
-            <Play className="h-6 w-6" />
-            Interactive Mathematics Simulation
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="text-gray-300">
-            Explore mathematical concepts through interactive simulations and visualizations.
-          </div>
-          
-          {simulationFile ? (
-            <div className="space-y-4">
-              <div className="p-4 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-lg border border-white/10">
-                <h3 className="text-white font-semibold mb-2">Available Simulation</h3>
-                <p className="text-gray-300 text-sm mb-3">
-                  Interactive simulation for {chapter.chapter}
-                </p>
-                <Button 
-                  onClick={handleOpenSimulation}
-                  className="bg-gradient-primary hover:shadow-glow transition-all duration-300"
-                >
-                  <ExternalLink className="w-4 h-4 mr-2" />
-                  Open Simulation
-                </Button>
-              </div>
+      {simulationFile ? (
+        <Card className="bg-white/10 backdrop-blur-xl border-white/20 overflow-hidden">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center gap-2">
+              <Play className="h-6 w-6" />
+              {chapter.chapter} Simulation
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <iframe
+              src={`/${simulationFile}`}
+              className="w-full h-[600px] border-0 rounded-b-lg"
+              title={`${chapter.chapter} Simulation`}
+              style={{ minHeight: '600px' }}
+            />
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="bg-white/10 backdrop-blur-xl border-white/20">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center gap-2">
+              <Play className="h-6 w-6" />
+              Interactive Mathematics Simulation
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="text-gray-300 mb-6">
+              Explore mathematical concepts through interactive simulations and visualizations.
             </div>
-          ) : (
+            
             <div className="text-center py-8">
+              <Play className="h-16 w-16 text-purple-300 mx-auto mb-4" />
               <div className="text-white text-lg mb-2">Simulation Coming Soon</div>
               <div className="text-gray-300">
                 Interactive simulation for {chapter.chapter} will be available soon.
               </div>
             </div>
-          )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-            <div className="p-4 bg-white/5 rounded-lg border border-white/10">
-              <h4 className="text-white font-medium mb-2">🎯 Learning Objectives</h4>
-              <p className="text-gray-300 text-sm">
-                Understand mathematical concepts through visual and interactive learning
-              </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+              <div className="p-4 bg-white/5 rounded-lg border border-white/10">
+                <h4 className="text-white font-medium mb-2">🎯 Learning Objectives</h4>
+                <p className="text-gray-300 text-sm">
+                  Understand mathematical concepts through visual and interactive learning
+                </p>
+              </div>
+              <div className="p-4 bg-white/5 rounded-lg border border-white/10">
+                <h4 className="text-white font-medium mb-2">🔬 Hands-on Practice</h4>
+                <p className="text-gray-300 text-sm">
+                  Practice problems with real-time feedback and step-by-step solutions
+                </p>
+              </div>
             </div>
-            <div className="p-4 bg-white/5 rounded-lg border border-white/10">
-              <h4 className="text-white font-medium mb-2">🔬 Hands-on Practice</h4>
-              <p className="text-gray-300 text-sm">
-                Practice problems with real-time feedback and step-by-step solutions
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
