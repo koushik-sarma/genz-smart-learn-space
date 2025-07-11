@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Polynomial Grapher and Zero-Finder</title>
+    
+    <!-- Include Chart.js library from a CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        /* --- Basic Styling --- */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        /* --- Main Container --- */
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            width: 100%;
+            max-width: 1200px;
+            background: #ffffff;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        /* --- Controls & Analysis Panel (Left Side) --- */
+        .panel {
+            flex: 1;
+            min-width: 300px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* --- Graph Container (Right Side) --- */
+        .graph-container {
+            flex: 2;
+            min-width: 400px;
+            min-height: 400px;
+        }
+
+        /* --- Individual Sections Styling --- */
+        .card {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+
+        h1, h2, h3 {
+            margin-top: 0;
+            color: #1a237e; /* A nice dark blue */
+            border-bottom: 2px solid #c5cae9;
+            padding-bottom: 8px;
+        }
+        
+        h1 {
+            width: 100%;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        /* --- Slider Styling --- */
+        .slider-group {
+            margin-bottom: 15px;
+        }
+
+        .slider-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            cursor: pointer;
+        }
+
+        /* --- Equation and Results Display --- */
+        #equation-display {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #3949ab;
+            text-align: center;
+            padding: 10px;
+            background: #e8eaf6;
+            border-radius: 4px;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        #discriminant-value, #zeroes-value {
+            font-size: 1.1em;
+            font-weight: 500;
+            color: #c62828; /* Dark red for emphasis */
+        }
+        
+        #discriminant-type {
+            font-style: italic;
+            color: #555;
+        }
+
+        /* --- Responsive Design for smaller screens --- */
+        @media (max-width: 800px) {
+            .container {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Polynomial Grapher and Zero-Finder</h1>
+
+        <!-- Left Panel for Controls and Analysis -->
+        <div class="panel">
+            <!-- User Controls Card -->
+            <div class="card" id="controls">
+                <h2>Controls</h2>
+                <p>Adjust the coefficients of the quadratic equation <strong>ax² + bx + c = 0</strong>.</p>
+                
+                <div class="slider-group">
+                    <label for="a-slider">Coefficient 'a': <span id="a-value">1.0</span></label>
+                    <input type="range" id="a-slider" min="-5" max="5" value="1" step="0.1">
+                </div>
+                
+                <div class="slider-group">
+                    <label for="b-slider">Coefficient 'b': <span id="b-value">0.0</span></label>
+                    <input type="range" id="b-slider" min="-10" max="10" value="0" step="0.1">
+                </div>
+
+                <div class="slider-group">
+                    <label for="c-slider">Coefficient 'c': <span id="c-value">-4.0</span></label>
+                    <input type="range" id="c-slider" min="-10" max="10" value="-4" step="0.1">
+                </div>
+            </div>
+
+            <!-- Analysis Card -->
+            <div class="card" id="analysis">
+                <h2>Analysis</h2>
+                
+                <h3>Equation</h3>
+                <div id="equation-display">y = 1.00x² + 0.00x - 4.00</div>
+                
+                <h3>Discriminant (b² - 4ac)</h3>
+                <p id="discriminant-value">16.00</p>
+                <p id="discriminant-type">2 distinct real roots</p>
+
+                <h3>Zeroes (Roots)</h3>
+                <p id="zeroes-value">x = 2.00, -2.00</p>
+            </div>
+        </div>
+
+        <!-- Right Panel for the Graph -->
+        <div class="graph-container">
+            <canvas id="polynomial-chart"></canvas>
+        </div>
+    </div>
+
+<script>
+    // --- JAVASCRIPT LOGIC ---
+
+    // 1. GET REFERENCES TO HTML ELEMENTS
+    // Sliders
+    const aSlider = document.getElementById('a-slider');
+    const bSlider = document.getElementById('b-slider');
+    const cSlider = document.getElementById('c-slider');
+    // Value displays next to sliders
+    const aValueSpan = document.getElementById('a-value');
+    const bValueSpan = document.getElementById('b-value');
+    const cValueSpan = document.getElementById('c-value');
+    // Analysis displays
+    const equationDisplay = document.getElementById('equation-display');
+    const discriminantValueEl = document.getElementById('discriminant-value');
+    const discriminantTypeEl = document.getElementById('discriminant-type');
+    const zeroesValueEl = document.getElementById('zeroes-value');
+    // Canvas for the chart
+    const ctx = document.getElementById('polynomial-chart').getContext('2d');
+
+    // 2. INITIALIZE THE CHART
+    const myChart = new Chart(ctx, {
+        type: 'scatter', // Scatter plot is best for functions
+        data: {
+            datasets: [
+                {
+                    label: 'y = ax² + bx + c',
+                    data: [], // This will be populated by our function
+                    showLine: true, // Connect the dots to form the parabola
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    fill: false,
+                    pointRadius: 0, // Hide individual points on the parabola line
+                    borderWidth: 3
+                },
+                {
+                    label: 'Zeroes',
+                    data: [], // This will hold the x-intercepts
+                    pointBackgroundColor: 'rgba(255, 99, 132, 1)',
+                    pointRadius: 6,
+                    pointHoverRadius: 8,
+                    showLine: false,
+                    fill: false
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: false, // Disable animation for real-time updates
+            scales: {
+                x: {
+                    type: 'linear',
+                    position: 'bottom',
+                    min: -10,
+                    max: 10,
+                    title: {
+                        display: true,
+                        text: 'x-axis'
+                    },
+                    grid: {
+                        zeroLineColor: '#333',
+                        zeroLineWidth: 2
+                    }
+                },
+                y: {
+                    type: 'linear',
+                    position: 'left',
+                    min: -10,
+                    max: 10,
+                    title: {
+                        display: true,
+                        text: 'y-axis'
+                    },
+                    grid: {
+                        zeroLineColor: '#333',
+                        zeroLineWidth: 2
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            if (context.parsed.y !== null) {
+                                label += `(${context.parsed.x.toFixed(2)}, ${context.parsed.y.toFixed(2)})`;
+                            }
+                            return label;
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // 3. THE CORE UPDATE FUNCTION
+    function updateGraph() {
+        // Get current values from sliders and convert them to numbers
+        const a = parseFloat(aSlider.value);
+        const b = parseFloat(bSlider.value);
+        const c = parseFloat(cSlider.value);
+
+        // Update the text labels next to the sliders
+        aValueSpan.textContent = a.toFixed(1);
+        bValueSpan.textContent = b.toFixed(1);
+        cValueSpan.textContent = c.toFixed(1);
+
+        // --- A. Generate data for the parabola ---
+        const parabolaData = [];
+        for (let x = -10; x <= 10; x += 0.1) {
+            // Calculate y for each x using the polynomial equation
+            const y = a * x * x + b * x + c;
+            parabolaData.push({ x: x, y: y });
+        }
+        
+        // Update the chart's parabola dataset
+        myChart.data.datasets[0].data = parabolaData;
+
+        // --- B. Calculate discriminant and zeroes ---
+        let zeroesData = [];
+        // Special case: If 'a' is 0, it's a linear equation (y = bx + c)
+        if (Math.abs(a) < 0.01) { 
+            equationDisplay.textContent = `y = ${b.toFixed(2)}x + ${c.toFixed(2)}`;
+            discriminantValueEl.textContent = "N/A (Linear Equation)";
+            
+            if (Math.abs(b) > 0.01) { // A non-horizontal line
+                const root = -c / b;
+                zeroesValueEl.textContent = `x = ${root.toFixed(2)}`;
+                discriminantTypeEl.textContent = "1 real root";
+                zeroesData.push({ x: root, y: 0 });
+            } else { // A horizontal line (y = c)
+                if (Math.abs(c) < 0.01) {
+                     zeroesValueEl.textContent = "Infinite roots (the entire x-axis)";
+                     discriminantTypeEl.textContent = "Infinite solutions";
+                } else {
+                    zeroesValueEl.textContent = "No real roots";
+                    discriminantTypeEl.textContent = "No real roots";
+                }
+            }
+        } 
+        // Standard quadratic case
+        else {
+            equationDisplay.innerHTML = `y = ${a.toFixed(2)}x² + ${b.toFixed(2)}x + ${c.toFixed(2)}`;
+            
+            const discriminant = b * b - 4 * a * c;
+            discriminantValueEl.textContent = discriminant.toFixed(2);
+
+            if (discriminant > 0) {
+                discriminantTypeEl.textContent = "2 distinct real roots";
+                const root1 = (-b + Math.sqrt(discriminant)) / (2 * a);
+                const root2 = (-b - Math.sqrt(discriminant)) / (2 * a);
+                zeroesValueEl.textContent = `x = ${root1.toFixed(2)},  ${root2.toFixed(2)}`;
+                zeroesData.push({ x: root1, y: 0 }, { x: root2, y: 0 });
+            } else if (Math.abs(discriminant) < 0.001) { // Use a small tolerance for floating point equality
+                discriminantTypeEl.textContent = "1 real root (repeated)";
+                const root = -b / (2 * a);
+                zeroesValueEl.textContent = `x = ${root.toFixed(2)}`;
+                zeroesData.push({ x: root, y: 0 });
+            } else { // discriminant < 0
+                discriminantTypeEl.textContent = "No real roots (complex roots)";
+                zeroesValueEl.textContent = "None";
+            }
+        }
+        
+        // Update the chart's zeroes dataset
+        myChart.data.datasets[1].data = zeroesData;
+
+        // --- C. Redraw the chart ---
+        myChart.update();
+    }
+
+    // 4. ADD EVENT LISTENERS
+    // Call updateGraph() whenever any slider's value changes
+    aSlider.addEventListener('input', updateGraph);
+    bSlider.addEventListener('input', updateGraph);
+    cSlider.addEventListener('input', updateGraph);
+
+    // 5. INITIAL DRAW
+    // Call the function once on page load to draw the initial state
+    updateGraph();
+</script>
+
+</body>
+</html>
