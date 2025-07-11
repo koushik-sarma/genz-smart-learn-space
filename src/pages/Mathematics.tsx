@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 
 interface MathematicsChapter {
-  maths_chapter_id: number;
+  math_chapter_id: number;
   chapter: string;
   chapter_description: string;
   part: string | null;
@@ -67,12 +67,12 @@ export default function Mathematics() {
 
       // Fetch mathematics chapters based on user's class, board, and subject
       const { data: chaptersData, error: chaptersError } = await supabase
-        .from('dim_maths_subject')
+        .from('dim_mathematics_subject')
         .select('*')
         .eq('class', parseInt(profileData.class))
         .eq('board_id', boardData.board_id)
         .eq('subject_id', subjectData.subject_id)
-        .order('maths_chapter_id');
+        .order('math_chapter_id');
 
       if (chaptersError) throw chaptersError;
       setChapters(chaptersData || []);
@@ -127,9 +127,9 @@ export default function Mathematics() {
         {/* Chapters Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {chapters.map((chapter) => (
-            <Card key={chapter.maths_chapter_id} className="bg-white/10 backdrop-blur-xl border-white/20 hover:bg-white/15 transition-all cursor-pointer">
+            <Card key={chapter.math_chapter_id} className="bg-white/10 backdrop-blur-xl border-white/20 hover:bg-white/15 transition-all cursor-pointer">
               <CardHeader>
-                <div className="text-sm text-purple-300 mb-2">Chapter {chapter.maths_chapter_id}</div>
+                <div className="text-sm text-purple-300 mb-2">Chapter {chapter.math_chapter_id}</div>
                 <CardTitle className="text-white text-lg">{chapter.chapter}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -147,7 +147,7 @@ export default function Mathematics() {
                   <Button 
                     size="sm" 
                     className="bg-gradient-primary hover:shadow-glow transition-all duration-300"
-                    onClick={() => navigate(`/mathematics/chapter/${chapter.maths_chapter_id}`)}
+                    onClick={() => navigate(`/mathematics/chapter/${chapter.math_chapter_id}`)}
                   >
                     Start Learning
                   </Button>
