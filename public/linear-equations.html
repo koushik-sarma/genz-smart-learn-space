@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Linear System Solver</title>
+
+    <!-- Include Chart.js library from a CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        /* --- Basic Styling --- */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f6f9;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        /* --- Main Container --- */
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            width: 100%;
+            max-width: 1300px;
+            background: #ffffff;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        /* --- Controls & Analysis Panel (Left Side) --- */
+        .panel {
+            flex: 1;
+            min-width: 320px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* --- Graph Container (Right Side) --- */
+        .graph-container {
+            flex: 2;
+            min-width: 400px;
+            min-height: 450px;
+        }
+
+        /* --- Individual Sections Styling --- */
+        .card {
+            background-color: #fdfdfd;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e7e7e7;
+        }
+
+        h1, h2, h3 {
+            margin-top: 0;
+            color: #0d47a1; /* A strong, deep blue */
+            padding-bottom: 8px;
+        }
+        
+        h1 {
+            width: 100%;
+            text-align: center;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #bbdefb;
+        }
+        
+        h3 {
+            font-family: 'Courier New', Courier, monospace;
+            background: #e3f2fd;
+            padding: 8px;
+            border-radius: 4px;
+            color: #1565c0;
+            text-align: center;
+        }
+
+        /* --- Input Field Styling --- */
+        .equation-group {
+            margin-bottom: 20px;
+        }
+        .input-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .input-row label {
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+        .input-row input {
+            width: 80px;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1em;
+            text-align: center;
+        }
+
+        /* --- Analysis Display Styling --- */
+        #solution-display {
+            font-size: 1.3em;
+            font-weight: bold;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        /* Dynamic coloring for solution type */
+        .solution-unique { background-color: #e8f5e9; color: #2e7d32; }
+        .solution-none { background-color: #ffebee; color: #c62828; }
+        .solution-infinite { background-color: #e3f2fd; color: #1565c0; }
+
+        .ratio-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: center;
+        }
+        .ratio-table th, .ratio-table td {
+            padding: 8px;
+            border: 1px solid #ddd;
+        }
+        .ratio-table th { background-color: #f2f2f2; }
+        .ratio-table td { font-family: monospace; font-size: 1.1em; }
+
+        /* --- Responsive Design --- */
+        @media (max-width: 900px) {
+            .container {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Linear System Solver</h1>
+
+        <!-- Left Panel: Controls & Analysis -->
+        <div class="panel">
+            <div class="card" id="controls">
+                <h2>Controls</h2>
+                <p>Enter coefficients for the two linear equations in the form <strong>ax + by = c</strong>.</p>
+                
+                <!-- Equation 1 -->
+                <div class="equation-group">
+                    <h3 id="eq1-display">2.0x + 1.0y = 5.0</h3>
+                    <div class="input-row">
+                        <input type="number" id="a1" value="2" step="0.5"> <label>x +</label>
+                        <input type="number" id="b1" value="1" step="0.5"> <label>y =</label>
+                        <input type="number" id="c1" value="5" step="0.5">
+                    </div>
+                </div>
+
+                <!-- Equation 2 -->
+                <div class="equation-group">
+                    <h3 id="eq2-display">1.0x - 2.0y = -5.0</h3>
+                    <div class="input-row">
+                        <input type="number" id="a2" value="1" step="0.5"> <label>x +</label>
+                        <input type="number" id="b2" value="-2" step="0.5"> <label>y =</label>
+                        <input type="number" id="c2" value="-5" step="0.5">
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" id="analysis">
+                <h2>Analysis</h2>
+                <div id="solution-display"></div>
+                <h3>Coefficient Ratios</h3>
+                <table class="ratio-table">
+                    <thead>
+                        <tr>
+                            <th>a₁/a₂</th>
+                            <th>b₁/b₂</th>
+                            <th>c₁/c₂</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td id="ratio-a"></td>
+                            <td id="ratio-b"></td>
+                            <td id="ratio-c"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Right Panel: Graph -->
+        <div class="graph-container">
+            <canvas id="linear-chart"></canvas>
+        </div>
+    </div>
+
+<script>
+    // --- JAVASCRIPT LOGIC ---
+    
+    // 1. GET REFERENCES TO HTML ELEMENTS
+    const inputs = {
+        a1: document.getElementById('a1'), b1: document.getElementById('b1'), c1: document.getElementById('c1'),
+        a2: document.getElementById('a2'), b2: document.getElementById('b2'), c2: document.getElementById('c2')
+    };
+    const displays = {
+        eq1: document.getElementById('eq1-display'),
+        eq2: document.getElementById('eq2-display'),
+        solution: document.getElementById('solution-display'),
+        ratioA: document.getElementById('ratio-a'),
+        ratioB: document.getElementById('ratio-b'),
+        ratioC: document.getElementById('ratio-c')
+    };
+    const ctx = document.getElementById('linear-chart').getContext('2d');
+    
+    // 2. INITIALIZE THE CHART
+    const X_MIN = -10, X_MAX = 10;
+    const Y_MIN = -10, Y_MAX = 10;
+
+    const myChart = new Chart(ctx, {
+        type: 'scatter',
+        data: {
+            datasets: [
+                {
+                    label: 'Line 1: a₁x + b₁y = c₁',
+                    data: [],
+                    showLine: true,
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    backgroundColor: 'transparent',
+                    pointRadius: 0,
+                    borderWidth: 3
+                },
+                {
+                    label: 'Line 2: a₂x + b₂y = c₂',
+                    data: [],
+                    showLine: true,
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    backgroundColor: 'transparent',
+                    pointRadius: 0,
+                    borderWidth: 3
+                },
+                {
+                    label: 'Solution',
+                    data: [],
+                    pointBackgroundColor: 'rgba(75, 192, 192, 1)',
+                    pointRadius: 8,
+                    pointHoverRadius: 10,
+                    pointStyle: 'crossRot',
+                    showLine: false
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: false,
+            scales: {
+                x: { min: X_MIN, max: X_MAX, title: { display: true, text: 'x-axis' } },
+                y: { min: Y_MIN, max: Y_MAX, title: { display: true, text: 'y-axis' } }
+            }
+        }
+    });
+
+    // 3. HELPER FUNCTIONS
+    /**
+     * Generates data points for a line ax + by = c
+     * @param {number} a - Coefficient of x
+     * @param {number} b - Coefficient of y
+     * @param {number} c - Constant term
+     * @returns {Array<{x, y}>} An array of points for plotting.
+     */
+    function generateLineData(a, b, c) {
+        const data = [];
+        // Handle vertical line (b=0, ax=c => x=c/a)
+        if (Math.abs(b) < 1e-9) {
+            if (Math.abs(a) > 1e-9) {
+                const x = c / a;
+                data.push({ x: x, y: Y_MIN * 2 }); // Extend beyond view for a clean line
+                data.push({ x: x, y: Y_MAX * 2 });
+            }
+            // If a and b are both 0, no line can be drawn.
+        } 
+        // Handle horizontal or sloped line
+        else {
+            const y1 = (-a * (X_MIN*2) + c) / b;
+            const y2 = (-a * (X_MAX*2) + c) / b;
+            data.push({ x: X_MIN * 2, y: y1 });
+            data.push({ x: X_MAX * 2, y: y2 });
+        }
+        return data;
+    }
+    
+    /** Formats a number for display, handling large/small values and decimals */
+    function formatNumber(num) {
+        if (Math.abs(num) > 1000 || (Math.abs(num) < 0.01 && num !== 0)) {
+            return num.toExponential(1);
+        }
+        return num.toFixed(2);
+    }
+
+    // 4. THE CORE UPDATE FUNCTION
+    function updateSimulation() {
+        // Read current values from inputs and parse them as floats
+        const [a1, b1, c1, a2, b2, c2] = Object.values(inputs).map(input => parseFloat(input.value) || 0);
+
+        // Update the equation display text
+        displays.eq1.textContent = `${a1.toFixed(1)}x + ${b1.toFixed(1)}y = ${c1.toFixed(1)}`;
+        displays.eq2.textContent = `${a2.toFixed(1)}x + ${b2.toFixed(1)}y = ${c2.toFixed(1)}`;
+
+        // --- A. Generate data for the lines and update the chart ---
+        myChart.data.datasets[0].data = generateLineData(a1, b1, c1);
+        myChart.data.datasets[1].data = generateLineData(a2, b2, c2);
+
+        // --- B. Analyze the system and find the solution ---
+        const determinant = a1 * b2 - a2 * b1;
+        let solutionPoint = [];
+        
+        // Use a small tolerance for floating point comparisons
+        const epsilon = 1e-9;
+
+        if (Math.abs(determinant) > epsilon) {
+            // Unique solution (lines intersect)
+            const x = (c1 * b2 - c2 * b1) / determinant;
+            const y = (a1 * c2 - a2 * c1) / determinant;
+            solutionPoint.push({x, y});
+            displays.solution.textContent = `Unique Solution at (${formatNumber(x)}, ${formatNumber(y)})`;
+            displays.solution.className = 'solution-unique';
+        } else {
+            // Lines are parallel or coincident
+            if (Math.abs(a1 * c2 - a2 * c1) < epsilon && Math.abs(b1 * c2 - b2 * c1) < epsilon) {
+                // Infinite solutions (coincident lines)
+                displays.solution.textContent = 'Infinite Solutions (Coincident Lines)';
+                displays.solution.className = 'solution-infinite';
+            } else {
+                // No solution (parallel lines)
+                displays.solution.textContent = 'No Solution (Parallel Lines)';
+                displays.solution.className = 'solution-none';
+            }
+        }
+        myChart.data.datasets[2].data = solutionPoint;
+
+        // --- C. Calculate and display ratios ---
+        displays.ratioA.textContent = (Math.abs(a2) < epsilon) ? 'a₂=0' : (a1 / a2).toFixed(2);
+        displays.ratioB.textContent = (Math.abs(b2) < epsilon) ? 'b₂=0' : (b1 / b2).toFixed(2);
+        displays.ratioC.textContent = (Math.abs(c2) < epsilon) ? 'c₂=0' : (c1 / c2).toFixed(2);
+
+        // --- D. Redraw the chart ---
+        myChart.update();
+    }
+
+    // 5. ADD EVENT LISTENERS
+    // Add a single event listener to the controls card to catch events from any input
+    document.getElementById('controls').addEventListener('input', updateSimulation);
+
+    // 6. INITIAL DRAW
+    // Call the function once on page load to draw the initial state
+    updateSimulation();
+</script>
+
+</body>
+</html>

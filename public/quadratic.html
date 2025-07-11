@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Completing the Square - Geometrically</title>
+    <style>
+        :root {
+            --x-size: 200px;
+            --max-b-size: 200px;
+            --color-x-sq: #4a90e2; /* Blue */
+            --color-b-rect: #f5a623; /* Orange */
+            --color-complete-sq: #7ed321; /* Green */
+            --border-color: #333;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f6f9;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 25px;
+            width: 100%;
+            max-width: 1200px;
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .panel {
+            flex: 1;
+            min-width: 320px;
+        }
+
+        .simulation-container {
+            flex: 2;
+            min-width: 450px;
+            height: 450px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        h1, h2 {
+            margin-top: 0;
+            color: #2c3e50;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 10px;
+        }
+
+        /* --- Controls Styling --- */
+        .controls {
+            margin-bottom: 20px;
+        }
+        .slider-group {
+            margin-bottom: 20px;
+        }
+        .slider-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        input[type="range"] {
+            width: 100%;
+            cursor: pointer;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+        .button-group button {
+            flex-grow: 1;
+            padding: 12px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            border-radius: 6px;
+            background-color: #3498db;
+            color: white;
+            transition: background-color 0.2s;
+        }
+        .button-group button:hover {
+            background-color: #2980b9;
+        }
+        #reset-btn {
+            background-color: #e74c3c;
+        }
+        #reset-btn:hover {
+            background-color: #c0392b;
+        }
+
+        /* --- Algebra Display --- */
+        #algebra-display {
+            background-color: #ecf0f1;
+            border-left: 5px solid #3498db;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        #algebra-display p { margin: 0; }
+        #algebra-display .comment {
+            font-size: 0.8em;
+            font-style: italic;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+
+        /* --- Geometric Shapes Styling --- */
+        .geometric-canvas {
+            position: relative;
+            width: calc(var(--x-size) + var(--max-b-size));
+            height: calc(var(--x-size) + var(--max-b-size));
+        }
+
+        .shape {
+            position: absolute;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+            border: 2px solid var(--border-color);
+            box-sizing: border-box;
+            transition: all 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55); /* "Elastic" transition */
+        }
+
+        #x-square { background-color: var(--color-x-sq); }
+        #b-half-1, #b-half-2 { background-color: var(--color-b-rect); }
+        #completing-square {
+            background-color: var(--color-complete-sq);
+            opacity: 0; /* Initially hidden */
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Left Panel: Controls and Explanation -->
+        <div class="panel">
+            <h1>Completing the Square</h1>
+            <p>Visually understand the expression <strong>x² + bx</strong> by rearranging its geometric parts into a nearly complete square.</p>
+            
+            <div class="controls">
+                <div class="slider-group">
+                    <label for="b-slider">Adjust coefficient 'b': <span id="b-value">8</span></label>
+                    <input type="range" id="b-slider" min="1" max="10" value="8" step="0.5">
+                </div>
+                <div class="button-group">
+                    <button id="step-1-btn">1. Split & Move</button>
+                    <button id="step-2-btn">2. Complete</button>
+                    <button id="reset-btn">Reset</button>
+                </div>
+            </div>
+
+            <h2>Algebraic Steps</h2>
+            <div id="algebra-display">
+                <p>Start with: x² + bx</p>
+                <p class="comment">The initial geometric parts represent this expression.</p>
+            </div>
+        </div>
+
+        <!-- Right Panel: The Simulation -->
+        <div class="simulation-container">
+            <div class="geometric-canvas">
+                <div class="shape" id="x-square">x²</div>
+                <div class="shape" id="b-half-1"></div>
+                <div class="shape" id="b-half-2"></div>
+                <div class="shape" id="completing-square"></div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    // --- JAVASCRIPT LOGIC ---
+
+    // 1. GET REFERENCES TO HTML ELEMENTS
+    const bSlider = document.getElementById('b-slider');
+    const bValueSpan = document.getElementById('b-value');
+    const algebraDisplay = document.getElementById('algebra-display');
+    const step1Btn = document.getElementById('step-1-btn');
+    const step2Btn = document.getElementById('step-2-btn');
+    const resetBtn = document.getElementById('reset-btn');
+
+    const shapes = {
+        xSquare: document.getElementById('x-square'),
+        bHalf1: document.getElementById('b-half-1'),
+        bHalf2: document.getElementById('b-half-2'),
+        completingSquare: document.getElementById('completing-square')
+    };
+
+    // 2. CONSTANTS AND STATE
+    const X_SIZE = 200; // in pixels, corresponds to CSS var --x-size
+    const MAX_B_SLIDER = parseFloat(bSlider.max);
+    const MAX_B_PIXELS = 200; // The max pixel width of the 'b' dimension
+
+    let currentState = 0; // 0: Initial, 1: Split/Moved, 2: Completed
+
+    // 3. CORE FUNCTIONS
+
+    /**
+     * Updates the dimensions and text of all shapes based on the current slider value.
+     */
+    function updateDimensions() {
+        const b = parseFloat(bSlider.value);
+        bValueSpan.textContent = b.toFixed(1);
+
+        // Scale the slider value 'b' to a pixel dimension
+        const bTotalPixels = (b / MAX_B_SLIDER) * MAX_B_PIXELS;
+        const bHalfPixels = bTotalPixels / 2;
+
+        // Update x-square (it's constant)
+        shapes.xSquare.style.width = `${X_SIZE}px`;
+        shapes.xSquare.style.height = `${X_SIZE}px`;
+
+        // Update the two 'b/2' rectangles
+        shapes.bHalf1.style.width = `${bHalfPixels}px`;
+        shapes.bHalf1.style.height = `${X_SIZE}px`;
+        shapes.bHalf1.innerHTML = `(<sup>b</sup>/₂)x`;
+
+        shapes.bHalf2.style.width = `${bHalfPixels}px`;
+        shapes.bHalf2.style.height = `${X_SIZE}px`;
+        shapes.bHalf2.innerHTML = `(<sup>b</sup>/₂)x`;
+
+        // Update the completing square
+        shapes.completingSquare.style.width = `${bHalfPixels}px`;
+        shapes.completingSquare.style.height = `${bHalfPixels}px`;
+        shapes.completingSquare.innerHTML = `(<sup>b</sup>/₂)²`;
+    }
+
+    /**
+     * Applies the CSS styles for a given state.
+     * This function repositions the shapes without changing their dimensions.
+     */
+    function applyStateLayout() {
+        const b = parseFloat(bSlider.value);
+        const bTotalPixels = (b / MAX_B_SLIDER) * MAX_B_PIXELS;
+        const bHalfPixels = bTotalPixels / 2;
+
+        // --- State 0: Initial Layout (x² and bx rectangle side-by-side) ---
+        if (currentState === 0) {
+            shapes.xSquare.style.top = '0px';
+            shapes.xSquare.style.left = '0px';
+            shapes.xSquare.style.opacity = '1';
+
+            shapes.bHalf1.style.top = '0px';
+            shapes.bHalf1.style.left = `${X_SIZE}px`;
+            shapes.bHalf1.style.height = `${X_SIZE}px`;
+            shapes.bHalf1.style.width = `${bHalfPixels}px`;
+            shapes.bHalf1.style.transform = 'rotate(0deg)';
+            shapes.bHalf1.style.opacity = '1';
+
+
+            shapes.bHalf2.style.top = '0px';
+            shapes.bHalf2.style.left = `${X_SIZE + bHalfPixels}px`;
+            shapes.bHalf2.style.height = `${X_SIZE}px`;
+            shapes.bHalf2.style.width = `${bHalfPixels}px`;
+            shapes.bHalf2.style.transform = 'rotate(0deg)';
+            shapes.bHalf2.style.opacity = '1';
+
+            shapes.completingSquare.style.opacity = '0';
+        }
+        
+        // --- State 1: Split and Moved Layout ---
+        if (currentState === 1) {
+            shapes.xSquare.style.top = '0px';
+            shapes.xSquare.style.left = '0px';
+
+            // First half moves to the right of x-square
+            shapes.bHalf1.style.top = '0px';
+            shapes.bHalf1.style.left = `${X_SIZE}px`;
+            shapes.bHalf1.style.transform = 'rotate(0deg)';
+
+            // Second half moves to the bottom, requiring a "rotation"
+            // We achieve this by swapping its height/width and moving it
+            shapes.bHalf2.style.height = `${bHalfPixels}px`;
+            shapes.bHalf2.style.width = `${X_SIZE}px`;
+            shapes.bHalf2.style.top = `${X_SIZE}px`;
+            shapes.bHalf2.style.left = `0px`;
+        }
+
+        // --- State 2: Completed Square Layout ---
+        if (currentState === 2) {
+            // Same as State 1, but we reveal the completing square
+            shapes.completingSquare.style.top = `${X_SIZE}px`;
+            shapes.completingSquare.style.left = `${X_SIZE}px`;
+            shapes.completingSquare.style.opacity = '1';
+        }
+    }
+
+    /**
+     * Updates the algebraic explanation text based on the current state.
+     */
+    function updateAlgebraText() {
+        const b = parseFloat(bSlider.value);
+        const b_over_2_sq = (b/2)**2;
+
+        if (currentState === 0) {
+            algebraDisplay.innerHTML = `
+                <p>Start with: x² + ${b.toFixed(1)}x</p>
+                <p class="comment">The area is represented by the blue square and orange rectangles.</p>`;
+        } else if (currentState === 1) {
+            algebraDisplay.innerHTML = `
+                <p>Rearrange: x² + 2 * (<sup>${b.toFixed(1)}</sup>/₂)x</p>
+                <p class="comment">The 'bx' rectangle is split and moved. Notice the missing corner piece.</p>`;
+        } else if (currentState === 2) {
+            algebraDisplay.innerHTML = `
+                <p>Complete: x² + ${b.toFixed(1)}x + (<sup>${b.toFixed(1)}</sup>/₂)²</p>
+                <p>= x² + ${b.toFixed(1)}x + ${b_over_2_sq.toFixed(2)}</p>
+                <p class="comment">This forms a perfect square with side length (x + ${b/2})</p>`;
+        }
+    }
+
+    // 4. EVENT HANDLERS
+
+    function handleStateChange(newState) {
+        currentState = newState;
+        updateDimensions(); // Ensure dimensions are correct
+        applyStateLayout(); // Move to the new layout
+        updateAlgebraText(); // Update the explanation
+    }
+
+    step1Btn.addEventListener('click', () => handleStateChange(1));
+    step2Btn.addEventListener('click', () => {
+        // You can only go to step 2 if you are already at step 1
+        if (currentState === 1) {
+            handleStateChange(2);
+        }
+    });
+    resetBtn.addEventListener('click', () => handleStateChange(0));
+    
+    // When slider changes, update everything for the current state
+    bSlider.addEventListener('input', () => {
+        updateDimensions();
+        applyStateLayout();
+        updateAlgebraText();
+    });
+
+    // 5. INITIALIZE THE SIMULATION
+    function initialize() {
+        handleStateChange(0);
+    }
+
+    // Run on page load
+    initialize();
+
+</script>
+</body>
+</html>

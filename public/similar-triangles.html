@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Basic Proportionality (Thales) Theorem Explorer</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f0f4f8;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #1a4a73;
+            text-align: center;
+        }
+
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 25px;
+            width: 100%;
+            max-width: 1200px;
+            justify-content: center;
+        }
+
+        .simulation-panel, .results-panel {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+            padding: 25px;
+            box-sizing: border-box;
+        }
+
+        .simulation-panel {
+            flex: 2;
+            min-width: 400px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .results-panel {
+            flex: 1;
+            min-width: 280px;
+        }
+
+        #simulationCanvas {
+            border: 2px solid #d1d9e6;
+            border-radius: 8px;
+            cursor: grab;
+            touch-action: none; /* Prevents page scrolling on canvas touch */
+        }
+
+        .instructions {
+            font-size: 0.9em;
+            color: #555;
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .results-panel h2 {
+            margin-top: 0;
+            color: #1a4a73;
+            border-bottom: 2px solid #e0e6f0;
+            padding-bottom: 10px;
+        }
+
+        .result-group p {
+            margin: 12px 0;
+            font-size: 1.1em;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .result-group span {
+            font-weight: bold;
+            color: #0056b3;
+            background-color: #e6f0fa;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        #conclusion {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e8f5e9; /* Light green */
+            border-left: 5px solid #4caf50; /* Green */
+            border-radius: 5px;
+            font-weight: bold;
+            color: #2e7d32;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Basic Proportionality (Thales) Theorem Explorer</h1>
+
+    <div class="container">
+        <div class="simulation-panel">
+            <canvas id="simulationCanvas"></canvas>
+            <p class="instructions">
+                <strong>Instructions:</strong> Drag the vertices (A, B, C) to reshape the triangle. Drag the line (DE) up and down.
+            </p>
+        </div>
+
+        <div class="results-panel">
+            <h2>Live Measurements</h2>
+            
+            <div class="result-group">
+                <p>Length AD: <span id="ad-length">0.00</span></p>
+                <p>Length DB: <span id="db-length">0.00</span></p>
+                <hr>
+                <p>Length AE: <span id="ae-length">0.00</span></p>
+                <p>Length EC: <span id="ec-length">0.00</span></p>
+            </div>
+            
+            <hr>
+            
+            <h2>Calculated Ratios</h2>
+            <div class="result-group">
+                <p>Ratio AD / DB: <span id="ratio1">0.00</span></p>
+                <p>Ratio AE / EC: <span id="ratio2">0.00</span></p>
+            </div>
+
+            <div id="conclusion">
+                Notice: The two ratios remain equal!
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Setup ---
+        const canvas = document.getElementById('simulationCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Get references to output spans
+        const adLengthSpan = document.getElementById('ad-length');
+        const dbLengthSpan = document.getElementById('db-length');
+        const aeLengthSpan = document.getElementById('ae-length');
+        const ecLengthSpan = document.getElementById('ec-length');
+        const ratio1Span = document.getElementById('ratio1');
+        const ratio2Span = document.getElementById('ratio2');
+
+        let points = {
+            A: { x: 0, y: 0 },
+            B: { x: 0, y: 0 },
+            C: { x: 0, y: 0 }
+        };
+
+        // D and E are calculated, not stored as primary points
+        let lineProportion = 0.5; // 0.0 to 1.0, position of line DE
+        const pointRadius = 10;
+        const hitRadius = 15;
+
+        let draggedPoint = null;
+        let isDraggingLine = false;
+
+        // --- Resizing and Initialization ---
+        function resizeCanvas() {
+            const parent = canvas.parentElement;
+            const size = Math.min(parent.clientWidth - 50, 600);
+            canvas.width = size;
+            canvas.height = size * 0.75;
+
+            // Initialize point positions based on canvas size
+            points.A = { x: canvas.width / 2, y: canvas.height * 0.15 };
+            points.B = { x: canvas.width * 0.1, y: canvas.height * 0.85 };
+            points.C = { x: canvas.width * 0.9, y: canvas.height * 0.85 };
+            
+            draw();
+        }
+
+        // --- Core Drawing and Calculation Logic ---
+        function draw() {
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Calculate D and E based on the current proportion
+            const D = {
+                x: points.A.x + lineProportion * (points.B.x - points.A.x),
+                y: points.A.y + lineProportion * (points.B.y - points.A.y)
+            };
+            const E = {
+                x: points.A.x + lineProportion * (points.C.x - points.A.x),
+                y: points.A.y + lineProportion * (points.C.y - points.A.y)
+            };
+
+            // Draw Triangle ABC
+            ctx.beginPath();
+            ctx.moveTo(points.A.x, points.A.y);
+            ctx.lineTo(points.B.x, points.B.y);
+            ctx.lineTo(points.C.x, points.C.y);
+            ctx.closePath();
+            ctx.strokeStyle = '#34495e';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // Draw Line DE
+            ctx.beginPath();
+            ctx.moveTo(D.x, D.y);
+            ctx.lineTo(E.x, E.y);
+            ctx.strokeStyle = '#e74c3c'; // Red
+            ctx.lineWidth = 4;
+            ctx.stroke();
+
+            // Draw vertices and points
+            drawPoint(points.A, 'A', '#2980b9');
+            drawPoint(points.B, 'B', '#2980b9');
+            drawPoint(points.C, 'C', '#2980b9');
+            drawPoint(D, 'D', '#c0392b');
+            drawPoint(E, 'E', '#c0392b');
+            
+            calculateAndDisplay(D, E);
+        }
+
+        function drawPoint(p, label, color) {
+            // Draw circle
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, pointRadius, 0, 2 * Math.PI);
+            ctx.fillStyle = color;
+            ctx.fill();
+
+            // Draw label
+            ctx.fillStyle = '#000';
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            // Offset label for better readability
+            ctx.fillText(label, p.x, p.y - pointRadius - 8);
+        }
+
+        function calculateAndDisplay(D, E) {
+            const scaleFactor = 10; // To make lengths more intuitive
+
+            const lenAD = distance(points.A, D) / scaleFactor;
+            const lenDB = distance(D, points.B) / scaleFactor;
+            const lenAE = distance(points.A, E) / scaleFactor;
+            const lenEC = distance(E, points.C) / scaleFactor;
+
+            const ratio1 = lenDB !== 0 ? lenAD / lenDB : 0;
+            const ratio2 = lenEC !== 0 ? lenAE / lenEC : 0;
+
+            adLengthSpan.textContent = lenAD.toFixed(2);
+            dbLengthSpan.textContent = lenDB.toFixed(2);
+            aeLengthSpan.textContent = lenAE.toFixed(2);
+            ecLengthSpan.textContent = lenEC.toFixed(2);
+            ratio1Span.textContent = ratio1.toFixed(3);
+            ratio2Span.textContent = ratio2.toFixed(3);
+        }
+
+        function distance(p1, p2) {
+            return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
+        }
+
+
+        // --- Interaction Handling ---
+        function getEventPosition(event) {
+            const rect = canvas.getBoundingClientRect();
+            const x = (event.clientX || event.touches[0].clientX) - rect.left;
+            const y = (event.clientY || event.touches[0].clientY) - rect.top;
+            return { x, y };
+        }
+
+        function handleStart(event) {
+            event.preventDefault();
+            const pos = getEventPosition(event);
+            
+            // Check if dragging a vertex
+            for (const key in points) {
+                if (distance(pos, points[key]) < hitRadius) {
+                    draggedPoint = points[key];
+                    canvas.style.cursor = 'grabbing';
+                    return;
+                }
+            }
+
+            // Check if dragging the line DE
+            const D = { x: points.A.x + lineProportion * (points.B.x - points.A.x), y: points.A.y + lineProportion * (points.B.y - points.A.y) };
+            const E = { x: points.A.x + lineProportion * (points.C.x - points.A.x), y: points.A.y + lineProportion * (points.C.y - points.A.y) };
+
+            // Check if the click is near the line segment DE
+            const distToLine = distanceToSegment(pos, D, E);
+            if (distToLine < hitRadius) {
+                isDraggingLine = true;
+                canvas.style.cursor = 'grabbing';
+            }
+        }
+
+        function handleMove(event) {
+            if (!draggedPoint && !isDraggingLine) return;
+            event.preventDefault();
+            const pos = getEventPosition(event);
+
+            if (draggedPoint) {
+                draggedPoint.x = pos.x;
+                draggedPoint.y = pos.y;
+            } else if (isDraggingLine) {
+                // Project mouse position onto the line segment AB to determine the proportion
+                const vecAB = { x: points.B.x - points.A.x, y: points.B.y - points.A.y };
+                const vecAM = { x: pos.x - points.A.x, y: pos.y - points.A.y };
+                const dotProduct = vecAM.x * vecAB.x + vecAM.y * vecAB.y;
+                const lenSqAB = vecAB.x * vecAB.x + vecAB.y * vecAB.y;
+                
+                let newProportion = dotProduct / lenSqAB;
+                // Clamp the proportion to be within the triangle
+                lineProportion = Math.max(0.01, Math.min(0.99, newProportion));
+            }
+            
+            draw();
+        }
+
+        function handleEnd() {
+            draggedPoint = null;
+            isDraggingLine = false;
+            canvas.style.cursor = 'grab';
+        }
+
+        // Helper for line dragging hit detection
+        function distanceToSegment(p, v, w) {
+            const l2 = distance(v, w) ** 2;
+            if (l2 === 0) return distance(p, v);
+            let t = ((p.x - v.x) * (w.x - v.x) + (p.y - v.y) * (w.y - v.y)) / l2;
+            t = Math.max(0, Math.min(1, t));
+            return distance(p, { x: v.x + t * (w.x - v.x), y: v.y + t * (w.y - v.y) });
+        }
+
+        // --- Event Listeners ---
+        window.addEventListener('resize', resizeCanvas);
+        
+        // Mouse events
+        canvas.addEventListener('mousedown', handleStart);
+        canvas.addEventListener('mousemove', handleMove);
+        window.addEventListener('mouseup', handleEnd); // Listen on window to catch mouseup outside canvas
+
+        // Touch events
+        canvas.addEventListener('touchstart', handleStart);
+        canvas.addEventListener('touchmove', handleMove);
+        window.addEventListener('touchend', handleEnd);
+
+        // --- Initial Load ---
+        resizeCanvas();
+    </script>
+
+</body>
+</html>

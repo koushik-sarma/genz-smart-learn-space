@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trigonometry Simulators</title>
+    <!-- Include Chart.js library from a CDN for the graphs -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f0f4f8;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        h1, h2 { color: #1a4a73; }
+        .main-container { max-width: 1400px; margin: 0 auto; }
+
+        /* Tab System */
+        .tab-container {
+            display: flex;
+            border-bottom: 2px solid #ccc;
+            margin-bottom: 20px;
+        }
+        .tab-btn {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: none;
+            background-color: transparent;
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #555;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+        .tab-btn.active {
+            color: #0056b3;
+            border-bottom-color: #0056b3;
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* General Panel Layout */
+        .panel {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+        .simulation-layout {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 25px;
+        }
+        .canvas-container {
+            flex: 2;
+            min-width: 350px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .controls-container {
+            flex: 1;
+            min-width: 300px;
+        }
+        canvas {
+            border: 1px solid #d1d9e6;
+            border-radius: 8px;
+            max-width: 100%;
+        }
+
+        /* Unit Circle Specific Styles */
+        #unit-circle-canvas { cursor: grab; }
+        #graphs-container {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        .graph-wrapper { flex: 1; min-width: 250px; min-height: 200px; }
+        .trig-value {
+            display: flex; justify-content: space-between;
+            font-size: 1.1em; margin: 10px 0;
+        }
+        .trig-value span { font-weight: bold; padding: 2px 8px; border-radius: 4px; }
+        .sin-val { color: #c0392b; background-color: #fcebeb; }
+        .cos-val { color: #2980b9; background-color: #eaf3fb; }
+        .tan-val { color: #27ae60; background-color: #e9f7ef; }
+        
+        /* Angle of Elevation Specific Styles */
+        .slider-group { margin-bottom: 20px; }
+        .slider-group label { display: block; margin-bottom: 8px; font-weight: 600; }
+        .slider-group input[type="range"] { width: 100%; }
+        .slider-group span { font-weight: bold; color: #e67e22; }
+        
+        #challenge-box {
+            margin-top: 25px;
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background-color: #fafafa;
+        }
+        #challenge-box button {
+            width: 100%; padding: 10px; font-size: 1em;
+            margin-top: 10px; cursor: pointer; border-radius: 5px;
+            border: 1px solid #ccc; background-color: #f0f0f0;
+        }
+        #challenge-box input { width: calc(100% - 20px); padding: 8px; margin-top: 5px; }
+        #feedback { font-weight: bold; margin-top: 10px; text-align: center; }
+
+    </style>
+</head>
+<body>
+
+<div class="main-container">
+    <h1>Trigonometry Simulators</h1>
+
+    <div class="tab-container">
+        <button class="tab-btn active" data-tab="unitCircle">Interactive Unit Circle</button>
+        <button class="tab-btn" data-tab="angleSim">Angle of Elevation</button>
+    </div>
+
+    <!-- ===== TAB 1: UNIT CIRCLE ===== -->
+    <div id="unitCircle" class="tab-content active">
+        <div class="panel">
+            <div class="simulation-layout">
+                <div class="canvas-container">
+                    <canvas id="unit-circle-canvas" width="400" height="400"></canvas>
+                </div>
+                <div class="controls-container">
+                    <h2>Live Values</h2>
+                    <p>Drag the point on the circle.</p>
+                    <div id="angle-display"><strong>Angle (θ):</strong> 0.00° / 0.00 rad</div>
+                    <hr>
+                    <div class="trig-value">sin(θ) = <span id="sin-value" class="sin-val">0.00</span></div>
+                    <div class="trig-value">cos(θ) = <span id="cos-value" class="cos-val">1.00</span></div>
+                    <div class="trig-value">tan(θ) = <span id="tan-value" class="tan-val">0.00</span></div>
+                </div>
+            </div>
+            <div id="graphs-container">
+                <div class="graph-wrapper"><canvas id="sinChart"></canvas></div>
+                <div class="graph-wrapper"><canvas id="cosChart"></canvas></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== TAB 2: ANGLE OF ELEVATION ===== -->
+    <div id="angleSim" class="tab-content">
+        <div class="panel">
+             <div class="simulation-layout">
+                <div class="controls-container">
+                    <h2>Controls</h2>
+                    <div class="slider-group" id="height-control">
+                        <label for="towerHeight">Tower Height: <span id="height-val">50</span> m</label>
+                        <input type="range" id="towerHeight" min="10" max="200" value="50">
+                    </div>
+                    <div class="slider-group" id="distance-control">
+                        <label for="observerDist">Observer Distance: <span id="dist-val">70</span> m</label>
+                        <input type="range" id="observerDist" min="10" max="200" value="70">
+                    </div>
+                    <hr>
+                    <h3>Angle of Elevation: <span id="angle-val">35.5°</span></h3>
+
+                    <div id="challenge-box">
+                        <h4>Challenge Me!</h4>
+                        <p id="challenge-question">Click below to start a problem.</p>
+                        <div id="answer-input-container" style="display:none;">
+                            <input type="number" id="user-answer" placeholder="Enter your answer">
+                            <button id="check-answer-btn">Check Answer</button>
+                        </div>
+                        <button id="start-challenge-btn">Start Challenge</button>
+                        <div id="feedback"></div>
+                    </div>
+                </div>
+                <div class="canvas-container">
+                    <canvas id="angle-canvas" width="500" height="400"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// =================================================================================
+//                                  GLOBAL SETUP
+// =================================================================================
+const tabs = document.querySelectorAll('.tab-btn');
+const contents = document.querySelectorAll('.tab-content');
+
+tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+        const target = document.getElementById(tab.dataset.tab);
+
+        tabs.forEach(t => t.classList.remove('active'));
+        contents.forEach(c => c.classList.remove('active'));
+
+        tab.classList.add('active');
+        target.classList.add('active');
+        
+        // Re-initialize or resize canvases when tab becomes active
+        if (tab.dataset.tab === 'unitCircle') initUnitCircle();
+        if (tab.dataset.tab === 'angleSim') initAngleSim();
+    });
+});
+
+window.addEventListener('resize', () => {
+    if (document.getElementById('unitCircle').classList.contains('active')) initUnitCircle();
+    if (document.getElementById('angleSim').classList.contains('active')) initAngleSim();
+});
+
+// =================================================================================
+//                          SIMULATION 1: INTERACTIVE UNIT CIRCLE
+// =================================================================================
+const ucCanvas = document.getElementById('unit-circle-canvas');
+const ucCtx = ucCanvas.getContext('2d');
+const angleDisplay = document.getElementById('angle-display');
+const sinVal = document.getElementById('sin-value');
+const cosVal = document.getElementById('cos-value');
+const tanVal = document.getElementById('tan-value');
+
+let ucCenter, ucRadius, ucAngle = 0, isUcDragging = false;
+let sinChart, cosChart;
+
+function initUnitCircle() {
+    const size = Math.min(ucCanvas.parentElement.clientWidth, 400);
+    ucCanvas.width = size;
+    ucCanvas.height = size;
+    ucCenter = { x: ucCanvas.width / 2, y: ucCanvas.height / 2 };
+    ucRadius = ucCanvas.width * 0.4;
+    
+    setupCharts();
+    drawUnitCircle();
+}
+
+function drawUnitCircle() {
+    ucCtx.clearRect(0, 0, ucCanvas.width, ucCanvas.height);
+
+    // Axes
+    ucCtx.strokeStyle = '#bdc3c7';
+    ucCtx.lineWidth = 1;
+    ucCtx.beginPath();
+    ucCtx.moveTo(0, ucCenter.y); ucCtx.lineTo(ucCanvas.width, ucCenter.y);
+    ucCtx.moveTo(ucCenter.x, 0); ucCtx.lineTo(ucCenter.x, ucCanvas.height);
+    ucCtx.stroke();
+
+    // Unit Circle
+    ucCtx.strokeStyle = '#34495e';
+    ucCtx.lineWidth = 2;
+    ucCtx.beginPath();
+    ucCtx.arc(ucCenter.x, ucCenter.y, ucRadius, 0, 2 * Math.PI);
+    ucCtx.stroke();
+    
+    // Point on circle
+    const pointX = ucCenter.x + ucRadius * Math.cos(ucAngle);
+    const pointY = ucCenter.y - ucRadius * Math.sin(ucAngle); // Y is inverted
+
+    // Triangle
+    // sin line (opposite)
+    ucCtx.beginPath();
+    ucCtx.moveTo(pointX, pointY);
+    ucCtx.lineTo(pointX, ucCenter.y);
+    ucCtx.strokeStyle = '#c0392b'; // red
+    ucCtx.lineWidth = 2;
+    ucCtx.stroke();
+    // cos line (adjacent)
+    ucCtx.beginPath();
+    ucCtx.moveTo(ucCenter.x, ucCenter.y);
+    ucCtx.lineTo(pointX, ucCenter.y);
+    ucCtx.strokeStyle = '#2980b9'; // blue
+    ucCtx.stroke();
+    // hypotenuse
+    ucCtx.beginPath();
+    ucCtx.moveTo(ucCenter.x, ucCenter.y);
+    ucCtx.lineTo(pointX, pointY);
+    ucCtx.strokeStyle = '#2c3e50';
+    ucCtx.stroke();
+    
+    // Draggable point
+    ucCtx.beginPath();
+    ucCtx.arc(pointX, pointY, 8, 0, 2 * Math.PI);
+    ucCtx.fillStyle = '#e67e22';
+    ucCtx.fill();
+
+    updateUcText();
+}
+
+function updateUcText() {
+    const deg = ucAngle * 180 / Math.PI;
+    const normalizedDeg = (deg % 360 + 360) % 360;
+    
+    angleDisplay.innerHTML = `<strong>Angle (θ):</strong> ${normalizedDeg.toFixed(2)}° / ${ucAngle.toFixed(2)} rad`;
+    
+    const sin = Math.sin(ucAngle);
+    const cos = Math.cos(ucAngle);
+    const tan = Math.tan(ucAngle);
+
+    sinVal.textContent = sin.toFixed(2);
+    cosVal.textContent = cos.toFixed(2);
+    tanVal.textContent = Math.abs(cos) < 1e-9 ? 'undefined' : tan.toFixed(2);
+}
+
+function getUcEventPosition(e) {
+    const rect = ucCanvas.getBoundingClientRect();
+    const x = (e.clientX || e.touches[0].clientX) - rect.left;
+    const y = (e.clientY || e.touches[0].clientY) - rect.top;
+    return { x, y };
+}
+
+function handleUcStart(e) {
+    isUcDragging = true;
+    ucCanvas.style.cursor = 'grabbing';
+    handleUcMove(e);
+}
+
+function handleUcMove(e) {
+    if (!isUcDragging) return;
+    const pos = getUcEventPosition(e);
+    ucAngle = Math.atan2(ucCenter.y - pos.y, pos.x - ucCenter.x);
+    drawUnitCircle();
+    updateTrigGraphs();
+}
+
+function handleUcEnd() {
+    isUcDragging = false;
+    ucCanvas.style.cursor = 'grab';
+}
+
+function setupCharts() {
+    if (sinChart) sinChart.destroy();
+    if (cosChart) cosChart.destroy();
+    const chartOptions = (label) => ({
+        responsive: true, maintainAspectRatio: false,
+        scales: { x: { title: { display: true, text: 'Angle (deg)' } }, y: { min: -1.1, max: 1.1 } },
+        plugins: { title: { display: true, text: `Graph of ${label}` } }
+    });
+    
+    sinChart = new Chart(document.getElementById('sinChart'), {
+        type: 'line', data: { labels: [], datasets: [{ label: 'sin(θ)', data: [], borderColor: '#c0392b', tension: 0.1 }] },
+        options: chartOptions('sin(θ)')
+    });
+    cosChart = new Chart(document.getElementById('cosChart'), {
+        type: 'line', data: { labels: [], datasets: [{ label: 'cos(θ)', data: [], borderColor: '#2980b9', tension: 0.1 }] },
+        options: chartOptions('cos(θ)')
+    });
+}
+
+function updateTrigGraphs() {
+    const deg = (ucAngle * 180 / Math.PI % 360 + 360) % 360;
+    
+    sinChart.data.labels.push(deg.toFixed(0));
+    sinChart.data.datasets[0].data.push(Math.sin(ucAngle));
+    cosChart.data.labels.push(deg.toFixed(0));
+    cosChart.data.datasets[0].data.push(Math.cos(ucAngle));
+
+    if (sinChart.data.labels.length > 50) {
+        sinChart.data.labels.shift();
+        sinChart.data.datasets[0].data.shift();
+        cosChart.data.labels.shift();
+        cosChart.data.datasets[0].data.shift();
+    }
+    sinChart.update('none');
+    cosChart.update('none');
+}
+
+ucCanvas.addEventListener('mousedown', handleUcStart);
+window.addEventListener('mousemove', handleUcMove);
+window.addEventListener('mouseup', handleUcEnd);
+ucCanvas.addEventListener('touchstart', handleUcStart, { passive: false });
+window.addEventListener('touchmove', handleUcMove, { passive: false });
+window.addEventListener('touchend', handleUcEnd);
+
+
+// =================================================================================
+//                           SIMULATION 2: ANGLE OF ELEVATION
+// =================================================================================
+const angleCanvas = document.getElementById('angle-canvas');
+const angleCtx = angleCanvas.getContext('2d');
+const heightSlider = document.getElementById('towerHeight');
+const distSlider = document.getElementById('observerDist');
+const heightVal = document.getElementById('height-val');
+const distVal = document.getElementById('dist-val');
+const angleVal = document.getElementById('angle-val');
+const startChallengeBtn = document.getElementById('start-challenge-btn');
+const checkAnswerBtn = document.getElementById('check-answer-btn');
+const challengeQuestion = document.getElementById('challenge-question');
+const answerInputContainer = document.getElementById('answer-input-container');
+const userAnswerInput = document.getElementById('user-answer');
+const feedback = document.getElementById('feedback');
+
+let challengeState = { active: false, unknown: '', answer: 0 };
+
+function initAngleSim() {
+    const parentWidth = angleCanvas.parentElement.clientWidth;
+    angleCanvas.width = Math.min(parentWidth, 500);
+    angleCanvas.height = angleCanvas.width * 0.8;
+    drawAngleSim();
+}
+
+function drawAngleSim() {
+    const h = parseFloat(heightSlider.value);
+    const d = parseFloat(distSlider.value);
+    
+    const C = { w: angleCanvas.width, h: angleCanvas.height };
+    const margin = { x: 50, y: 40 };
+    const scale = Math.min((C.w - 2*margin.x) / d, (C.h - 2*margin.y) / h);
+    
+    const towerW = 20;
+    const towerH = h * scale;
+    const observerD = d * scale;
+    const groundY = C.h - margin.y;
+    const towerX = margin.x;
+    const observerX = towerX + observerD;
+    
+    angleCtx.clearRect(0, 0, C.w, C.h);
+    
+    // Tower
+    angleCtx.fillStyle = '#7f8c8d';
+    angleCtx.fillRect(towerX, groundY - towerH, towerW, towerH);
+    
+    // Observer
+    const eyeH = 15;
+    angleCtx.fillStyle = '#34495e';
+    angleCtx.beginPath();
+    angleCtx.arc(observerX, groundY - eyeH, 5, 0, 2*Math.PI);
+    angleCtx.fill();
+    
+    // Ground
+    angleCtx.strokeStyle = '#2c3e50';
+    angleCtx.lineWidth = 2;
+    angleCtx.beginPath();
+    angleCtx.moveTo(0, groundY);
+    angleCtx.lineTo(C.w, groundY);
+    angleCtx.stroke();
+    
+    // Lines of sight
+    angleCtx.setLineDash([5, 5]);
+    angleCtx.strokeStyle = '#95a5a6';
+    angleCtx.beginPath(); // Horizontal
+    angleCtx.moveTo(observerX, groundY - towerH);
+    angleCtx.lineTo(towerX, groundY - towerH);
+    angleCtx.stroke();
+
+    angleCtx.setLineDash([]);
+    angleCtx.strokeStyle = '#e67e22';
+    angleCtx.lineWidth = 3;
+    angleCtx.beginPath(); // Line of sight
+    angleCtx.moveTo(observerX, groundY - eyeH);
+    angleCtx.lineTo(towerX + towerW / 2, groundY - towerH);
+    angleCtx.stroke();
+
+    // Angle calculation and drawing
+    const angleRad = Math.atan((h - eyeH/scale) / d);
+    const angleDeg = angleRad * 180 / Math.PI;
+    
+    angleCtx.strokeStyle = 'rgba(230, 126, 34, 0.5)';
+    angleCtx.fillStyle = 'rgba(230, 126, 34, 0.2)';
+    angleCtx.beginPath();
+    angleCtx.moveTo(observerX, groundY - eyeH);
+    angleCtx.arc(observerX, groundY-eyeH, 50, -angleRad, 0);
+    angleCtx.closePath();
+    angleCtx.fill();
+    angleCtx.stroke();
+    
+    // Update text
+    heightVal.textContent = h.toFixed(0);
+    distVal.textContent = d.toFixed(0);
+    if (!challengeState.active || challengeState.unknown !== 'angle') {
+        angleVal.textContent = `${angleDeg.toFixed(1)}°`;
+    }
+}
+
+function setupChallenge() {
+    challengeState.active = true;
+    feedback.textContent = '';
+    userAnswerInput.value = '';
+    const unknowns = ['height', 'distance', 'angle'];
+    challengeState.unknown = unknowns[Math.floor(Math.random() * unknowns.length)];
+
+    // Reset controls
+    document.getElementById('height-control').style.display = 'block';
+    document.getElementById('distance-control').style.display = 'block';
+    angleVal.style.display = 'inline';
+    
+    let questionText = "Calculate the missing value.";
+    
+    if (challengeState.unknown === 'height') {
+        document.getElementById('height-control').style.display = 'none';
+        const d = parseFloat(distSlider.value);
+        const a = parseFloat(angleVal.textContent);
+        challengeState.answer = d * Math.tan(a * Math.PI / 180);
+        questionText = `Given angle=${a}° and distance=${d}m, find the height.`;
+    } else if (challengeState.unknown === 'distance') {
+        document.getElementById('distance-control').style.display = 'none';
+        const h = parseFloat(heightSlider.value);
+        const a = parseFloat(angleVal.textContent);
+        challengeState.answer = h / Math.tan(a * Math.PI / 180);
+        questionText = `Given angle=${a}° and height=${h}m, find the distance.`;
+    } else { // angle
+        angleVal.style.display = 'none';
+        const h = parseFloat(heightSlider.value);
+        const d = parseFloat(distSlider.value);
+        challengeState.answer = Math.atan(h / d) * 180 / Math.PI;
+        questionText = `Given height=${h}m and distance=${d}m, find the angle.`;
+    }
+    
+    challengeQuestion.textContent = questionText;
+    answerInputContainer.style.display = 'block';
+    startChallengeBtn.textContent = 'New Challenge';
+}
+
+function checkAnswer() {
+    const userAnswer = parseFloat(userAnswerInput.value);
+    if (isNaN(userAnswer)) {
+        feedback.textContent = "Please enter a valid number.";
+        feedback.style.color = '#e74c3c';
+        return;
+    }
+
+    const correct = challengeState.answer;
+    // Allow a 5% tolerance
+    if (Math.abs(userAnswer - correct) / correct < 0.05) {
+        feedback.textContent = `Correct! The answer is ${correct.toFixed(1)}.`;
+        feedback.style.color = '#2ecc71';
+    } else {
+        feedback.textContent = `Not quite. The correct answer is ${correct.toFixed(1)}. Try again!`;
+        feedback.style.color = '#e74c3c';
+    }
+    challengeState.active = false;
+    startChallengeBtn.textContent = 'Start Challenge';
+    answerInputContainer.style.display = 'none';
+    
+    // Show the correct values
+    document.getElementById('height-control').style.display = 'block';
+    document.getElementById('distance-control').style.display = 'block';
+    angleVal.style.display = 'inline';
+    drawAngleSim();
+}
+
+heightSlider.addEventListener('input', drawAngleSim);
+distSlider.addEventListener('input', drawAngleSim);
+startChallengeBtn.addEventListener('click', setupChallenge);
+checkAnswerBtn.addEventListener('click', checkAnswer);
+
+// --- INITIALIZE FIRST TAB ---
+initUnitCircle();
+
+</script>
+</body>
+</html>

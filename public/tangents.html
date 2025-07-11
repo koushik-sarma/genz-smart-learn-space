@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tangent and Secant Simulations</title>
+    <style>
+        /* --- General Layout & Theming --- */
+        :root {
+            --color-primary: #3498db;
+            --color-secondary: #e74c3c;
+            --color-text: #2c3e50;
+            --color-bg: #f4f6f9;
+            --color-panel: #ffffff;
+            --color-border: #e0e0e0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--color-bg);
+            color: var(--color-text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        .main-container {
+            width: 100%;
+            max-width: 1200px;
+            background: var(--color-panel);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        /* --- Tab System --- */
+        .tab-nav {
+            display: flex;
+            border-bottom: 2px solid var(--color-border);
+            margin-bottom: 20px;
+        }
+        .tab-button {
+            padding: 12px 20px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 1.1em;
+            font-weight: 500;
+            color: #7f8c8d;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px; /* Align with container border */
+        }
+        .tab-button.active {
+            color: var(--color-primary);
+            border-bottom-color: var(--color-primary);
+            font-weight: bold;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 25px;
+        }
+
+        /* --- Simulation Layout --- */
+        .panel {
+            flex: 1;
+            min-width: 320px;
+        }
+        .simulation-container {
+            flex: 2;
+            min-width: 500px;
+            min-height: 500px;
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            background-color: #fff;
+        }
+
+        h1, h2, h3 {
+            margin-top: 0;
+            color: #1a237e;
+        }
+        h1 { text-align: center; width: 100%; margin-bottom: 20px; }
+        h2 { border-bottom: 2px solid var(--color-border); padding-bottom: 8px; }
+
+        .info-card {
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: bold;
+            text-align: center;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        
+        /* --- SVG Styling (shared) --- */
+        .simulation-svg { width: 100%; height: 100%; }
+        .main-circle { fill: none; stroke: #bdc3c7; stroke-width: 3; }
+        .point { stroke: #333; stroke-width: 2; }
+        .point:active { cursor: grabbing; }
+        .point-label { font-size: 18px; font-weight: bold; pointer-events: none; text-anchor: middle; }
+        
+        /* --- Sim 1 Specific Styles --- */
+        #sim1-status.secant { background-color: var(--color-primary); color: white; }
+        #sim1-status.tangent { background-color: var(--color-secondary); color: white; }
+        #sim1-line { stroke-width: 3; cursor: grab; }
+        #sim1-pointP { fill: #2ecc71; cursor: grab; }
+        #sim1-pointQ { fill: #f1c40f; }
+
+        /* --- Sim 2 Specific Styles (FIXED) --- */
+        .info-group { margin-bottom: 15px; }
+        .info-group .label { font-weight: normal; font-size: 0.9em; color: #555; }
+        .info-group .value { font-family: monospace; font-size: 1.2em; color: #000; }
+        #sim2-pointP { fill: #9b59b6; cursor: grab; }
+        .sim2-tangent-line { stroke: var(--color-secondary); stroke-width: 3; }
+        .sim2-radius-line { stroke: var(--color-primary); stroke-width: 2; stroke-dasharray: 4 4; }
+        .sim2-tangency-point { fill: #e67e22; }
+
+    </style>
+</head>
+<body>
+
+    <div class="main-container">
+        <h1>Tangent & Secant Simulations</h1>
+
+        <!-- Tab Navigation -->
+        <div class="tab-nav">
+            <button class="tab-button active" data-tab="1">Tangent as Limit of a Secant</button>
+            <button class="tab-button" data-tab="2">Tangents from an External Point</button>
+        </div>
+
+        <!-- Tab 1 Content: Limit of a Secant -->
+        <div id="tab-content-1" class="tab-content active">
+            <div class="panel">
+                <h2>1. Tangent as a Limit</h2>
+                <p>This simulation shows how a tangent line is the special case of a secant line where the two intersection points coincide.</p>
+                <div id="sim1-status" class="info-card secant">Secant</div>
+                <h3 style="margin-top:20px;">Instructions</h3>
+                <ul>
+                    <li><strong>Drag point P</strong> to move it on the circle.</li>
+                    <li><strong>Drag the line</strong> to rotate it around P.</li>
+                    <li>Observe how point Q moves and how the line becomes a tangent when P and Q meet.</li>
+                </ul>
+            </div>
+            <div class="simulation-container">
+                <svg id="sim1-svg" class="simulation-svg" viewBox="0 0 500 500">
+                    <circle class="main-circle" cx="250" cy="250" r="150"></circle>
+                    <line id="sim1-line"></line>
+                    <circle class="point" id="sim1-pointQ" r="8"></circle>
+                    <circle class="point" id="sim1-pointP" r="10"></circle>
+                    <text class="point-label" id="sim1-labelP" fill="#2ecc71">P</text>
+                    <text class="point-label" id="sim1-labelQ" fill="#f1c40f">Q</text>
+                </svg>
+            </div>
+        </div>
+
+        <!-- Tab 2 Content: Tangents from External Point -->
+        <div id="tab-content-2" class="tab-content">
+             <div class="panel">
+                <h2>2. Tangents from an External Point</h2>
+                <p>This simulation demonstrates that the lengths of the two tangents from an external point to a circle are always equal (Theorem 9.2).</p>
+                <div class="info-group">
+                    <div class="label">Length of Tangent PA:</div>
+                    <div class="value" id="sim2-lenA"></div>
+                </div>
+                 <div class="info-group">
+                    <div class="label">Length of Tangent PB:</div>
+                    <div class="value" id="sim2-lenB"></div>
+                </div>
+                 <div class="info-group">
+                    <div class="label">Angle ∠OAP and ∠OBP:</div>
+                    <div class="value">90° (Right Angle)</div>
+                </div>
+                <h3 style="margin-top:20px;">Instructions</h3>
+                <ul>
+                    <li><strong>Drag point P</strong> anywhere outside the circle.</li>
+                    <li>Notice that the lengths of the tangent segments PA and PB are always equal.</li>
+                </ul>
+            </div>
+            <div class="simulation-container">
+                <svg id="sim2-svg" class="simulation-svg" viewBox="0 0 500 500">
+                    <circle class="main-circle" cx="250" cy="250" r="120"></circle>
+                    <!-- Lines will be created by JS -->
+                    <g id="sim2-geometry-group"></g>
+                    <!-- Points -->
+                    <circle class="point" id="sim2-pointP" r="10"></circle>
+                    <!-- Labels -->
+                    <g id="sim2-label-group"></g>
+                </svg>
+            </div>
+        </div>
+    </div>
+
+<script>
+// --- GLOBAL TAB LOGIC ---
+const tabs = document.querySelectorAll('.tab-button');
+const tabContents = document.querySelectorAll('.tab-content');
+
+tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+        // Deactivate all
+        tabs.forEach(t => t.classList.remove('active'));
+        tabContents.forEach(c => c.classList.remove('active'));
+
+        // Activate clicked tab and content
+        tab.classList.add('active');
+        document.getElementById(`tab-content-${tab.dataset.tab}`).classList.add('active');
+    });
+});
+
+
+// --- SIMULATION 1: TANGENT AS LIMIT OF SECANT ---
+const Sim1 = {
+    // --- State and Constants ---
+    svg: document.getElementById('sim1-svg'),
+    statusDisplay: document.getElementById('sim1-status'),
+    elements: {
+        pointP: document.getElementById('sim1-pointP'),
+        pointQ: document.getElementById('sim1-pointQ'),
+        line: document.getElementById('sim1-line'),
+        labelP: document.getElementById('sim1-labelP'),
+        labelQ: document.getElementById('sim1-labelQ')
+    },
+    CENTER: { x: 250, y: 250 },
+    RADIUS: 150,
+    TANGENT_THRESHOLD: 0.1,
+    state: {
+        p_angle: Math.PI / 4,
+        line_angle: Math.PI * 0.8,
+        isDraggingP: false,
+        isRotatingLine: false
+    },
+
+    // --- Core Methods ---
+    init() {
+        this.update();
+        this.svg.addEventListener('mousedown', this.onMouseDown.bind(this));
+        this.svg.addEventListener('mousemove', this.onMouseMove.bind(this));
+        window.addEventListener('mouseup', this.onMouseUp.bind(this));
+    },
+
+    update() {
+        const p = this.angleToCoords(this.state.p_angle);
+        const q = this.findOtherIntersection(p, this.state.line_angle);
+        
+        this.elements.pointP.setAttribute('cx', p.x);
+        this.elements.pointP.setAttribute('cy', p.y);
+        this.elements.labelP.setAttribute('x', p.x);
+        this.elements.labelP.setAttribute('y', p.y - 15);
+        
+        this.elements.pointQ.setAttribute('cx', q.x);
+        this.elements.pointQ.setAttribute('cy', q.y);
+        this.elements.labelQ.setAttribute('x', q.x);
+        this.elements.labelQ.setAttribute('y', q.y - 15);
+
+        const lineLength = 1000;
+        const lineDir = { x: Math.cos(this.state.line_angle), y: Math.sin(this.state.line_angle) };
+        this.elements.line.setAttribute('x1', p.x - lineDir.x * lineLength);
+        this.elements.line.setAttribute('y1', p.y - lineDir.y * lineLength);
+        this.elements.line.setAttribute('x2', p.x + lineDir.x * lineLength);
+        this.elements.line.setAttribute('y2', p.y + lineDir.y * lineLength);
+
+        const distPQ = Math.hypot(p.x - q.x, p.y - q.y);
+        if (distPQ < this.TANGENT_THRESHOLD) {
+            this.statusDisplay.textContent = 'Tangent';
+            this.statusDisplay.className = 'info-card tangent';
+            this.elements.line.style.stroke = 'var(--color-secondary)';
+            this.elements.pointQ.style.opacity = 0;
+            this.elements.labelQ.style.opacity = 0;
+        } else {
+            this.statusDisplay.textContent = 'Secant';
+            this.statusDisplay.className = 'info-card secant';
+            this.elements.line.style.stroke = 'var(--color-primary)';
+            this.elements.pointQ.style.opacity = 1;
+            this.elements.labelQ.style.opacity = 1;
+        }
+    },
+
+    // --- Helper & Event Methods ---
+    angleToCoords(angle) {
+        return {
+            x: this.CENTER.x + this.RADIUS * Math.cos(angle),
+            y: this.CENTER.y + this.RADIUS * Math.sin(angle)
+        };
+    },
+    
+    findOtherIntersection(p, lineAngle) {
+        const d = { x: Math.cos(lineAngle), y: Math.sin(lineAngle) };
+        const f = { x: p.x - this.CENTER.x, y: p.y - this.CENTER.y };
+        const b = 2 * (f.x * d.x + f.y * d.y);
+        const t2 = -b; // Since a=1, c=0 for line through point on circle
+        return { x: p.x + t2 * d.x, y: p.y + t2 * d.y };
+    },
+    
+    getMousePos(evt) {
+        const CTM = this.svg.getScreenCTM();
+        return { x: (evt.clientX - CTM.e) / CTM.a, y: (evt.clientY - CTM.f) / CTM.d };
+    },
+
+    onMouseDown(evt) {
+        if (evt.target === this.elements.pointP) this.state.isDraggingP = true;
+        else if (evt.target === this.elements.line) this.state.isRotatingLine = true;
+        if (this.state.isDraggingP || this.state.isRotatingLine) this.svg.style.cursor = 'grabbing';
+    },
+
+    onMouseMove(evt) {
+        if (!this.state.isDraggingP && !this.state.isRotatingLine) return;
+        evt.preventDefault();
+        const mousePos = this.getMousePos(evt);
+        const p = this.angleToCoords(this.state.p_angle);
+        if (this.state.isDraggingP) {
+            this.state.p_angle = Math.atan2(mousePos.y - this.CENTER.y, mousePos.x - this.CENTER.x);
+        }
+        if (this.state.isRotatingLine) {
+            this.state.line_angle = Math.atan2(mousePos.y - p.y, mousePos.x - p.x);
+        }
+        this.update();
+    },
+
+    onMouseUp() {
+        this.state.isDraggingP = false;
+        this.state.isRotatingLine = false;
+        this.svg.style.cursor = 'default';
+    }
+};
+
+// --- SIMULATION 2: TANGENTS FROM EXTERNAL POINT ---
+const Sim2 = {
+    // --- State and Constants ---
+    svg: document.getElementById('sim2-svg'),
+    pointP: document.getElementById('sim2-pointP'),
+    geoGroup: document.getElementById('sim2-geometry-group'),
+    labelGroup: document.getElementById('sim2-label-group'),
+    lenA_Display: document.getElementById('sim2-lenA'),
+    lenB_Display: document.getElementById('sim2-lenB'),
+    CENTER: { x: 250, y: 250 },
+    RADIUS: 120,
+    state: {
+        p: { x: 450, y: 250 },
+        isDragging: false
+    },
+
+    // --- Core Methods ---
+    init() {
+        this.update();
+        this.pointP.addEventListener('mousedown', this.onMouseDown.bind(this));
+        this.svg.addEventListener('mousemove', this.onMouseMove.bind(this));
+        window.addEventListener('mouseup', this.onMouseUp.bind(this));
+    },
+
+    update() {
+        // Constrain P to be outside the circle
+        const distOP = Math.hypot(this.state.p.x - this.CENTER.x, this.state.p.y - this.CENTER.y);
+        if (distOP < this.RADIUS) {
+            const angle = Math.atan2(this.state.p.y - this.CENTER.y, this.state.p.x - this.CENTER.x);
+            this.state.p.x = this.CENTER.x + this.RADIUS * Math.cos(angle);
+            this.state.p.y = this.CENTER.y + this.RADIUS * Math.sin(angle);
+        }
+        this.pointP.setAttribute('cx', this.state.p.x);
+        this.pointP.setAttribute('cy', this.state.p.y);
+        
+        const tangencyPoints = this.findTangencyPoints(this.state.p);
+        
+        this.geoGroup.innerHTML = ''; // Clear old geometry
+        this.labelGroup.innerHTML = ''; // Clear old labels
+
+        if (tangencyPoints) {
+            const [a, b] = tangencyPoints;
+            const len = Math.hypot(this.state.p.x - a.x, this.state.p.y - a.y);
+            this.lenA_Display.textContent = len.toFixed(2);
+            this.lenB_Display.textContent = len.toFixed(2);
+            
+            // Draw geometry
+            this.drawSVGElement('line', { x1:this.state.p.x, y1:this.state.p.y, x2:a.x, y2:a.y, class:'sim2-tangent-line' });
+            this.drawSVGElement('line', { x1:this.state.p.x, y1:this.state.p.y, x2:b.x, y2:b.y, class:'sim2-tangent-line' });
+            this.drawSVGElement('line', { x1:this.CENTER.x, y1:this.CENTER.y, x2:a.x, y2:a.y, class:'sim2-radius-line' });
+            this.drawSVGElement('line', { x1:this.CENTER.x, y1:this.CENTER.y, x2:b.x, y2:b.y, class:'sim2-radius-line' });
+            this.drawSVGElement('circle', { cx:a.x, cy:a.y, r:6, class:'point sim2-tangency-point' });
+            this.drawSVGElement('circle', { cx:b.x, cy:b.y, r:6, class:'point sim2-tangency-point' });
+
+            // Draw labels
+            this.drawSVGElement('text', { x:this.CENTER.x, y:this.CENTER.y - 10, content:'O', fill:'#555' });
+            this.drawSVGElement('text', { x:this.state.p.x, y:this.state.p.y - 15, content:'P', fill:'#9b59b6' });
+            this.drawSVGElement('text', { x:a.x + (a.x - this.CENTER.x)*0.1, y: a.y + (a.y - this.CENTER.y)*0.1 - 5, content:'A', fill:'#e67e22' });
+            this.drawSVGElement('text', { x:b.x + (b.x - this.CENTER.x)*0.1, y: b.y + (b.y - this.CENTER.y)*0.1 + 15, content:'B', fill:'#e67e22' });
+        } else {
+            this.lenA_Display.textContent = 'N/A';
+            this.lenB_Display.textContent = 'N/A';
+        }
+    },
+
+    // --- Helper & Event Methods ---
+    findTangencyPoints(p) {
+        const dx = p.x - this.CENTER.x;
+        const dy = p.y - this.CENTER.y;
+        const distSq = dx * dx + dy * dy;
+        if (distSq < this.RADIUS * this.RADIUS) return null;
+        
+        const dist = Math.sqrt(distSq);
+        const a = Math.atan2(dy, dx);
+        const b = Math.acos(this.RADIUS / dist);
+
+        const pt1 = {
+            x: this.CENTER.x + this.RADIUS * Math.cos(a - b),
+            y: this.CENTER.y + this.RADIUS * Math.sin(a - b)
+        };
+        const pt2 = {
+            x: this.CENTER.x + this.RADIUS * Math.cos(a + b),
+            y: this.CENTER.y + this.RADIUS * Math.sin(a + b)
+        };
+        return [pt1, pt2];
+    },
+
+    drawSVGElement(type, attrs) {
+        const el = document.createElementNS("http://www.w3.org/2000/svg", type);
+        for(let key in attrs) {
+            if (key === 'content') el.textContent = attrs[key];
+            else el.setAttribute(key, attrs[key]);
+        }
+        if (type === 'line' || type === 'circle') this.geoGroup.appendChild(el);
+        else this.labelGroup.appendChild(el);
+    },
+
+    getMousePos(evt) {
+        const CTM = this.svg.getScreenCTM();
+        return { x: (evt.clientX - CTM.e) / CTM.a, y: (evt.clientY - CTM.f) / CTM.d };
+    },
+
+    onMouseDown(evt) {
+        if (evt.target === this.pointP) {
+            this.state.isDragging = true;
+            this.svg.style.cursor = 'grabbing';
+        }
+    },
+    
+    onMouseMove(evt) {
+        if (!this.state.isDragging) return;
+        evt.preventDefault();
+        const mousePos = this.getMousePos(evt);
+        this.state.p = mousePos;
+        this.update();
+    },
+
+    onMouseUp() {
+        this.state.isDragging = false;
+        this.svg.style.cursor = 'default';
+    }
+};
+
+// --- INITIALIZE SIMULATIONS ---
+Sim1.init();
+Sim2.init();
+
+</script>
+</body>
+</html>

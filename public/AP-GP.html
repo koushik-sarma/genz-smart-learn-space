@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arithmetic & Geometric Progression Simulator</title>
+    
+    <!-- Include Chart.js library from a CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        /* Basic Styling for a clean look */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f7f9;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+        }
+
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .controls, .results {
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            padding: 25px;
+            box-sizing: border-box;
+        }
+
+        .controls {
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .results {
+            flex: 2;
+            min-width: 400px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .form-group input[type="number"], .form-group input[type="radio"] {
+            margin-right: 5px;
+        }
+
+        .form-group input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        #chart-container {
+            position: relative;
+            flex-grow: 1;
+            min-height: 300px;
+        }
+        
+        #output-summary {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        
+        #output-sequence {
+            word-wrap: break-word;
+            background-color: #ecf0f1;
+            padding: 10px;
+            border-radius: 4px;
+            min-height: 40px;
+        }
+        
+        #error-message {
+            color: #e74c3c;
+            font-weight: bold;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Progression Simulator (AP & GP)</h1>
+
+    <div class="container">
+        <!-- USER CONTROLS PANEL -->
+        <div class="controls">
+            <h2>Controls</h2>
+            <form id="sim-form">
+                <div class="form-group">
+                    <label>Progression Type</label>
+                    <input type="radio" id="ap" name="progression" value="AP" checked>
+                    <label for="ap">Arithmetic (AP)</label>
+                    <input type="radio" id="gp" name="progression" value="GP">
+                    <label for="gp">Geometric (GP)</label>
+                </div>
+
+                <div class="form-group">
+                    <label for="firstTerm">First Term (a)</label>
+                    <input type="number" id="firstTerm" value="2" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="commonValue" id="common-label">Common Difference (d)</label>
+                    <input type="number" id="commonValue" value="3" step="any" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="numTerms">Number of Terms (n)</label>
+                    <input type="number" id="numTerms" value="10" min="2" max="100" required>
+                </div>
+                
+                <button type="submit">Generate and Plot</button>
+                <p id="error-message"></p>
+            </form>
+        </div>
+
+        <!-- SIMULATION RESULTS PANEL -->
+        <div class="results">
+            <h2>Simulation & Graph</h2>
+            <div id="chart-container">
+                <canvas id="myChart"></canvas>
+            </div>
+            <div id="output-summary">
+                 <p><strong>Sequence:</strong></p>
+                 <p id="output-sequence">Results will appear here...</p>
+                 <p><strong>Nth Term:</strong> <span id="output-nth-term"></span></p>
+                 <p><strong>Sum of N Terms:</strong> <span id="output-sum"></span></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- DOM Element References ---
+        const form = document.getElementById('sim-form');
+        const apRadio = document.getElementById('ap');
+        const gpRadio = document.getElementById('gp');
+        const commonLabel = document.getElementById('common-label');
+        const firstTermInput = document.getElementById('firstTerm');
+        const commonValueInput = document.getElementById('commonValue');
+        const numTermsInput = document.getElementById('numTerms');
+        const errorMessage = document.getElementById('error-message');
+
+        const outputSequence = document.getElementById('output-sequence');
+        const outputNthTerm = document.getElementById('output-nth-term');
+        const outputSum = document.getElementById('output-sum');
+        
+        const chartCanvas = document.getElementById('myChart');
+        let myChart = null; // To hold the chart instance
+
+        // --- Event Listeners ---
+        
+        // Change the label for the common value based on radio selection
+        apRadio.addEventListener('change', () => {
+            commonLabel.textContent = 'Common Difference (d)';
+        });
+
+        gpRadio.addEventListener('change', () => {
+            commonLabel.textContent = 'Common Ratio (r)';
+        });
+
+        // Handle form submission to start the simulation
+        form.addEventListener('submit', (e) => {
+            e.preventDefault(); // Prevent page reload
+            runSimulation();
+        });
+
+        // --- Main Simulation Logic ---
+        function runSimulation() {
+            // 1. Get and validate user inputs
+            const type = document.querySelector('input[name="progression"]:checked').value;
+            const a = parseFloat(firstTermInput.value);
+            const commonVal = parseFloat(commonValueInput.value);
+            const n = parseInt(numTermsInput.value);
+
+            errorMessage.textContent = ''; // Clear previous errors
+            if (isNaN(a) || isNaN(commonVal) || isNaN(n)) {
+                errorMessage.textContent = 'Please enter valid numbers for all fields.';
+                return;
+            }
+            if (n <= 1 || n > 100) {
+                errorMessage.textContent = 'Number of terms must be between 2 and 100.';
+                return;
+            }
+
+            // 2. Generate the sequence
+            let sequence = [];
+            let labels = [];
+            for (let i = 1; i <= n; i++) {
+                let term;
+                if (type === 'AP') {
+                    term = a + (i - 1) * commonVal;
+                } else { // GP
+                    term = a * Math.pow(commonVal, i - 1);
+                }
+                sequence.push(term);
+                labels.push(i); // Term number for x-axis
+            }
+
+            // 3. Calculate Nth Term and Sum
+            const nthTerm = sequence[n - 1];
+            let sum;
+            if (type === 'AP') {
+                sum = (n / 2) * (2 * a + (n - 1) * commonVal);
+            } else { // GP
+                if (commonVal === 1) {
+                    sum = a * n;
+                } else {
+                    sum = a * (Math.pow(commonVal, n) - 1) / (commonVal - 1);
+                }
+            }
+
+            // 4. Animate the display and plotting
+            animateDisplay(sequence, labels, nthTerm, sum, type);
+        }
+
+        async function animateDisplay(sequence, labels, nthTerm, sum, type) {
+            // Clear previous results and destroy old chart
+            if (myChart) {
+                myChart.destroy();
+            }
+            outputSequence.textContent = '';
+            outputNthTerm.textContent = '';
+            outputSum.textContent = '';
+
+            // Initialize the chart
+            const chartData = {
+                labels: [],
+                datasets: [{
+                    label: `${type} Term Value`,
+                    data: [],
+                    borderColor: '#3498db',
+                    backgroundColor: '#3498db',
+                    fill: false,
+                    tension: type === 'GP' ? 0.4 : 0 // Makes GP curve, AP straight
+                }]
+            };
+
+            const chartConfig = {
+                type: 'line',
+                data: chartData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Term Number (n)'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Term Value'
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: `Plot of an ${type === 'AP' ? 'Arithmetic' : 'Geometric'} Progression`
+                        }
+                    }
+                }
+            };
+            
+            myChart = new Chart(chartCanvas, chartConfig);
+            
+            // Animation loop using a delay
+            const delay = 150; // ms
+            for (let i = 0; i < sequence.length; i++) {
+                // Update text display
+                outputSequence.textContent += (i > 0 ? ', ' : '') + formatNumber(sequence[i]);
+                
+                // Update chart data
+                myChart.data.labels.push(labels[i]);
+                myChart.data.datasets[0].data.push(sequence[i]);
+                myChart.update();
+                
+                // Wait for the next step
+                await new Promise(resolve => setTimeout(resolve, delay));
+            }
+            
+            // Display final calculated values
+            outputNthTerm.textContent = formatNumber(nthTerm);
+            outputSum.textContent = formatNumber(sum);
+        }
+        
+        // Helper to format large or decimal numbers neatly
+        function formatNumber(num) {
+            if (Math.abs(num) > 1e6 || (Math.abs(num) < 1e-3 && num !== 0)) {
+                return num.toExponential(2);
+            }
+            return Number(num.toFixed(4));
+        }
+        
+        // Run once on load with default values
+        document.addEventListener('DOMContentLoaded', runSimulation);
+
+    </script>
+</body>
+</html>

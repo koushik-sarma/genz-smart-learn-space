@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Experimental vs. Theoretical Probability</title>
+
+    <!-- Include Chart.js library from a CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --color-primary: #2980b9;
+            --color-secondary: #27ae60;
+            --color-accent: #e74c3c;
+            --color-bg: #f4f6f9;
+            --color-panel: #ffffff;
+            --color-text: #333;
+            --color-border: #e0e0e0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--color-bg);
+            color: var(--color-text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .main-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 25px;
+            width: 100%;
+            max-width: 1400px;
+            background: var(--color-panel);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .panel {
+            flex: 1;
+            min-width: 320px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .charts-container {
+            flex: 3;
+            min-width: 600px;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        .card {
+            background-color: #fdfdfd;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--color-border);
+        }
+
+        h1, h2 {
+            margin-top: 0;
+            color: #1a237e;
+            border-bottom: 2px solid var(--color-border);
+            padding-bottom: 8px;
+        }
+        h1 { text-align: center; width: 100%; }
+        
+        .control-group {
+            margin-bottom: 15px;
+        }
+        .control-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .control-group select, .control-group input {
+            width: 100%;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 1em;
+        }
+        
+        #run-btn {
+            width: 100%;
+            padding: 12px;
+            font-size: 1.1em;
+            font-weight: bold;
+            background-color: var(--color-primary);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        #run-btn:hover {
+            background-color: #3498db;
+        }
+        
+        #theoretical-prob-display {
+            font-family: monospace;
+            font-size: 1.2em;
+            font-weight: bold;
+            color: var(--color-accent);
+        }
+        
+        .chart-wrapper {
+            position: relative;
+            height: 40vh;
+            min-height: 300px;
+        }
+        
+        @media (max-width: 1000px) {
+            .main-container {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="main-container">
+        <h1>Probability Simulator</h1>
+
+        <!-- Left Panel: Controls and Info -->
+        <div class="panel">
+            <div class="card">
+                <h2>Controls</h2>
+                <div class="control-group">
+                    <label for="experiment-type">Experiment Type</label>
+                    <select id="experiment-type">
+                        <option value="coin" selected>Coin Toss</option>
+                        <option value="dice">Dice Roll</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="num-trials">Number of Trials</label>
+                    <input type="number" id="num-trials" value="1000" min="1" max="50000" step="10">
+                </div>
+                <button id="run-btn">Run Simulation</button>
+            </div>
+            <div class="card">
+                <h2>Information</h2>
+                <p>This line graph tracks the probability of getting <strong id="target-outcome-display">Heads</strong>.</p>
+                <p>Theoretical Probability: <span id="theoretical-prob-display"></span></p>
+                <p>Observe how the blue line (experimental) gets closer to the red dashed line (theoretical) as the number of trials increases.</p>
+            </div>
+        </div>
+
+        <!-- Right Panel: Charts -->
+        <div class="charts-container">
+            <div class="card">
+                <h2>Experimental Probability vs. Trials</h2>
+                <div class="chart-wrapper">
+                    <canvas id="convergence-chart"></canvas>
+                </div>
+            </div>
+            <div class="card">
+                <h2>Frequency of Outcomes</h2>
+                <div class="chart-wrapper">
+                    <canvas id="frequency-chart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    // --- JAVASCRIPT LOGIC ---
+
+    // 1. GET REFERENCES TO HTML ELEMENTS AND CHART CONTEXTS
+    const experimentSelect = document.getElementById('experiment-type');
+    const trialsInput = document.getElementById('num-trials');
+    const runBtn = document.getElementById('run-btn');
+    const targetOutcomeDisplay = document.getElementById('target-outcome-display');
+    const theoreticalProbDisplay = document.getElementById('theoretical-prob-display');
+
+    const convergenceCtx = document.getElementById('convergence-chart').getContext('2d');
+    const frequencyCtx = document.getElementById('frequency-chart').getContext('2d');
+
+    let convergenceChart, frequencyChart;
+
+    // 2. CHART INITIALIZATION
+    function createCharts() {
+        // Destroy existing charts if they exist, to prevent conflicts
+        if (convergenceChart) convergenceChart.destroy();
+        if (frequencyChart) frequencyChart.destroy();
+        
+        // --- Line Chart for Convergence ---
+        convergenceChart = new Chart(convergenceCtx, {
+            type: 'line',
+            data: {
+                datasets: [
+                    {
+                        label: 'Experimental Probability',
+                        data: [],
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        borderWidth: 2,
+                        pointRadius: 0, // No dots on the line for clarity
+                        fill: false,
+                        tension: 0.1
+                    },
+                    {
+                        label: 'Theoretical Probability',
+                        data: [],
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        fill: false,
+                        borderDash: [5, 5] // Dashed line
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        type: 'linear',
+                        title: { display: true, text: 'Number of Trials' },
+                        min: 1
+                    },
+                    y: {
+                        title: { display: true, text: 'Probability' },
+                        min: 0,
+                        max: 1
+                    }
+                }
+            }
+        });
+
+        // --- Bar Chart for Frequency ---
+        frequencyChart = new Chart(frequencyCtx, {
+            type: 'bar',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Count',
+                    data: [],
+                    backgroundColor: 'rgba(39, 174, 96, 0.6)',
+                    borderColor: 'rgba(39, 174, 96, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: { display: true, text: 'Frequency (Count)' }
+                    }
+                }
+            }
+        });
+    }
+
+    // 3. THE SIMULATION LOGIC
+    function runSimulation() {
+        const experiment = experimentSelect.value;
+        const numTrials = parseInt(trialsInput.value);
+
+        let outcomes, targetOutcome, theoreticalProb;
+
+        if (experiment === 'coin') {
+            outcomes = ['Heads', 'Tails'];
+            targetOutcome = 'Heads';
+            theoreticalProb = 0.5;
+        } else { // dice
+            outcomes = ['1', '2', '3', '4', '5', '6'];
+            targetOutcome = '6'; // Let's track the probability of rolling a 6
+            theoreticalProb = 1 / 6;
+        }
+
+        // Update UI text
+        targetOutcomeDisplay.textContent = targetOutcome;
+        theoreticalProbDisplay.textContent = `${theoreticalProb.toFixed(4)} (${experiment === 'coin' ? '1/2' : '1/6'})`;
+        
+        // Initialize data structures for the run
+        const counts = {};
+        outcomes.forEach(o => counts[o] = 0);
+        
+        const convergenceData = [];
+        let targetCount = 0;
+
+        // --- The Main Simulation Loop ---
+        for (let i = 1; i <= numTrials; i++) {
+            let currentOutcome;
+            if (experiment === 'coin') {
+                currentOutcome = Math.random() < 0.5 ? 'Heads' : 'Tails';
+            } else { // dice
+                currentOutcome = (Math.floor(Math.random() * 6) + 1).toString();
+            }
+            
+            // Update frequency count
+            counts[currentOutcome]++;
+            
+            // Update convergence data
+            if (currentOutcome === targetOutcome) {
+                targetCount++;
+            }
+            const experimentalProb = targetCount / i;
+            convergenceData.push({ x: i, y: experimentalProb });
+        }
+        
+        // 4. UPDATE THE CHARTS WITH NEW DATA
+        
+        // Update frequency chart
+        frequencyChart.data.labels = outcomes;
+        frequencyChart.data.datasets[0].data = outcomes.map(o => counts[o]);
+        frequencyChart.update();
+        
+        // Update convergence chart
+        convergenceChart.data.datasets[0].data = convergenceData;
+        
+        // Update the theoretical probability line
+        convergenceChart.data.datasets[1].data = [
+            { x: 1, y: theoreticalProb },
+            { x: numTrials, y: theoreticalProb }
+        ];
+        
+        // Adjust the x-axis to match the number of trials
+        convergenceChart.options.scales.x.max = numTrials;
+        convergenceChart.update();
+    }
+
+    // 5. EVENT LISTENERS
+    runBtn.addEventListener('click', runSimulation);
+    
+    // Also update info text when the selection changes, even before running
+    experimentSelect.addEventListener('change', () => {
+        const experiment = experimentSelect.value;
+        if (experiment === 'coin') {
+            targetOutcomeDisplay.textContent = 'Heads';
+            theoreticalProbDisplay.textContent = '0.5000 (1/2)';
+        } else {
+            targetOutcomeDisplay.textContent = '6';
+            theoreticalProbDisplay.textContent = `${(1/6).toFixed(4)} (1/6)`;
+        }
+    });
+
+    // 6. INITIAL RUN
+    createCharts();
+    runSimulation();
+
+</script>
+</body>
+</html>
