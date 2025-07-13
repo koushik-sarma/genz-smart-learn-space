@@ -42,16 +42,51 @@ export default function SocialChapter() {
       if (chapterError) throw chapterError;
       setChapter(chapterData);
 
-      // Then fetch chapter notes
-      const { data: notesData, error: notesError } = await supabase
+      // Then fetch chapter notes - try multiple strategies to find notes
+      let notesData = null;
+      let notesError = null;
+
+      // Strategy 1: Try with exact match on all fields
+      const { data: notesData1, error: notesError1 } = await supabase
         .from('dim_social_chapters_notes')
         .select('*')
         .eq('chapter_id', parseInt(chapterId))
         .eq('board_id', chapterData.board_id)
         .eq('subject_id', chapterData.subject_id)
-        .single();
+        .maybeSingle();
 
-      if (notesError) {
+      if (notesData1) {
+        notesData = notesData1;
+      } else {
+        // Strategy 2: Try matching by chapter_id and board_id only (for data inconsistencies)
+        const { data: notesData2, error: notesError2 } = await supabase
+          .from('dim_social_chapters_notes')
+          .select('*')
+          .eq('chapter_id', parseInt(chapterId))
+          .eq('board_id', chapterData.board_id)
+          .maybeSingle();
+
+        if (notesData2) {
+          notesData = notesData2;
+        } else {
+          // Strategy 3: Try matching by chapter_id and part only
+          const { data: notesData3, error: notesError3 } = await supabase
+            .from('dim_social_chapters_notes')
+            .select('*')
+            .eq('chapter_id', parseInt(chapterId))
+            .eq('part', chapterData.part)
+            .maybeSingle();
+
+          if (notesData3) {
+            notesData = notesData3;
+          } else {
+            console.log('No notes found with any strategy');
+            notesError = notesError3 || notesError2 || notesError1;
+          }
+        }
+      }
+
+      if (notesError && !notesData) {
         console.log('No notes found:', notesError);
         setNotes(null);
       } else {
