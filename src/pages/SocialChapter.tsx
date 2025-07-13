@@ -95,11 +95,18 @@ export default function SocialChapter() {
           <Button 
             variant="outline" 
             size="sm"
-            onClick={() => navigate('/social')}
+            onClick={() => {
+              // Navigate back based on the chapter's part
+              if (chapter?.part === '2') {
+                navigate('/social-part2');
+              } else {
+                navigate('/social');
+              }
+            }}
             className="bg-white/10 border-white/20 text-white hover:bg-white/20"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Social Science
+            Back to Social Science Part {chapter?.part || '1'}
           </Button>
           
           <SocialChapterHeader chapter={chapter} />
