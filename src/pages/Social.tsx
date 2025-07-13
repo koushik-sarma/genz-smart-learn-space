@@ -45,11 +45,11 @@ export default function Social() {
 
       if (boardError) throw boardError;
 
-      // Get the subject_id for Social Science
+      // Get the subject_id for Social Studies
       const { data: subjectData, error: subjectError } = await supabase
         .from('dim_subjects')
         .select('subject_id')
-        .eq('subject_name', 'Social Science')
+        .eq('subject_name', 'Social Studies - Part 1')
         .eq('class', parseInt(profileData.class))
         .eq('board_name', profileData.board_of_education)
         .single();

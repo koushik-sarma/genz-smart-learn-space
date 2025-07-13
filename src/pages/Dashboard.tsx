@@ -372,7 +372,7 @@ export default function Dashboard() {
                           navigate('/biology');
                         } else if (subject.subject_name === 'Mathematics') {
                           navigate('/mathematics');
-                        } else if (subject.subject_name === 'Social Science') {
+                        } else if (subject.subject_name === 'Social Studies - Part 1') {
                           navigate('/social');
                         }
                       }}
