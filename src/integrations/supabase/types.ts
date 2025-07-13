@@ -341,6 +341,48 @@ export type Database = {
         }
         Relationships: []
       }
+      dim_social_chapters_notes: {
+        Row: {
+          board_id: number
+          chapter_discussion_points: string
+          chapter_id: number
+          chapter_important_dates: string
+          chapter_map_points: string
+          chapter_quick_recall: string
+          chapter_summary: string
+          chapter_takeaways: string
+          part: string | null
+          social_notes_id: number
+          subject_id: number
+        }
+        Insert: {
+          board_id: number
+          chapter_discussion_points: string
+          chapter_id: number
+          chapter_important_dates: string
+          chapter_map_points: string
+          chapter_quick_recall: string
+          chapter_summary: string
+          chapter_takeaways: string
+          part?: string | null
+          social_notes_id?: number
+          subject_id: number
+        }
+        Update: {
+          board_id?: number
+          chapter_discussion_points?: string
+          chapter_id?: number
+          chapter_important_dates?: string
+          chapter_map_points?: string
+          chapter_quick_recall?: string
+          chapter_summary?: string
+          chapter_takeaways?: string
+          part?: string | null
+          social_notes_id?: number
+          subject_id?: number
+        }
+        Relationships: []
+      }
       dim_social_subject: {
         Row: {
           board_id: number
