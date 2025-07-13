@@ -15,6 +15,7 @@ import BiologyChapter from "./pages/BiologyChapter";
 import Mathematics from "./pages/Mathematics";
 import MathematicsChapter from "./pages/MathematicsChapter";
 import Social from "./pages/Social";
+import SocialPart2 from "./pages/SocialPart2";
 import SocialChapter from "./pages/SocialChapter";
 import NotFound from "./pages/NotFound";
 
@@ -39,6 +40,7 @@ const App = () => (
           <Route path="/mathematics" element={<Mathematics />} />
           <Route path="/mathematics/chapter/:chapterId" element={<MathematicsChapter />} />
           <Route path="/social" element={<Social />} />
+          <Route path="/social-part2" element={<SocialPart2 />} />
           <Route path="/social/chapter/:chapterId" element={<SocialChapter />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

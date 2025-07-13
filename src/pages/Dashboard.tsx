@@ -374,6 +374,8 @@ export default function Dashboard() {
                           navigate('/mathematics');
                         } else if (subject.subject_name === 'Social Studies - Part 1') {
                           navigate('/social');
+                        } else if (subject.subject_name === 'Social Studies - Part 2') {
+                          navigate('/social-part2');
                         }
                       }}
                     >
