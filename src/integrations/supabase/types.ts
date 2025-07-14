@@ -654,7 +654,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      award_points: {
+        Args: {
+          p_user_id: string
+          p_points: number
+          p_reason: string
+          p_reference_id?: string
+          p_reference_type?: string
+        }
+        Returns: undefined
+      }
+      calculate_level: {
+        Args: { total_points: number }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never
