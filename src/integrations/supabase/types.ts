@@ -668,6 +668,18 @@ export type Database = {
         Args: { total_points: number }
         Returns: number
       }
+      check_and_award_badges: {
+        Args: { p_user_id: string }
+        Returns: undefined
+      }
+      update_chapter_completion: {
+        Args: { p_user_id: string }
+        Returns: undefined
+      }
+      update_quiz_completion: {
+        Args: { p_user_id: string; p_score: number }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
