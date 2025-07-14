@@ -50,6 +50,7 @@ export default function SimulationTab({ chapter }: SimulationTabProps) {
               src={`/${simulationFile}`}
               className="w-full h-full border-0"
               title={`${chapter.chapter} Simulation`}
+              style={{ overflow: 'auto' }}
             />
           </div>
         ) : (

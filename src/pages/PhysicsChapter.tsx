@@ -277,7 +277,7 @@ export default function PhysicsChapter() {
                     src="/reflection-simulation.html.html"
                     className="w-full h-[600px] border-0 rounded-b-lg"
                     title="Reflection of Light Simulation"
-                    style={{ minHeight: '600px' }}
+                    style={{ minHeight: '600px', overflow: 'auto' }}
                   />
                 </CardContent>
               </Card>
@@ -291,7 +291,7 @@ export default function PhysicsChapter() {
                     src="/refraction-simulation.html"
                     className="w-full h-[600px] border-0 rounded-b-lg"
                     title="Refraction of Light Simulation"
-                    style={{ minHeight: '600px' }}
+                    style={{ minHeight: '600px', overflow: 'auto' }}
                   />
                 </CardContent>
               </Card>
@@ -308,7 +308,7 @@ export default function PhysicsChapter() {
                     src="/human-eye-and-light.html"
                     className="w-full h-[600px] border-0 rounded-b-lg"
                     title="Human Eye and Light Simulation"
-                    style={{ minHeight: '600px' }}
+                    style={{ minHeight: '600px', overflow: 'auto' }}
                   />
                 </CardContent>
               </Card>
@@ -325,7 +325,7 @@ export default function PhysicsChapter() {
                     src="/circuit-simulation.html"
                     className="w-full h-[600px] border-0 rounded-b-lg"
                     title="Electric Circuit Simulation"
-                    style={{ minHeight: '600px' }}
+                    style={{ minHeight: '600px', overflow: 'auto' }}
                   />
                 </CardContent>
               </Card>
@@ -341,7 +341,7 @@ export default function PhysicsChapter() {
                     src="/Electromagnetism.html"
                     className="w-full h-[600px] border-0 rounded-b-lg"
                     title="Electromagnetism Simulation"
-                    style={{ minHeight: '600px' }}
+                    style={{ minHeight: '600px', overflow: 'auto' }}
                   />
                 </CardContent>
               </Card>
@@ -357,7 +357,7 @@ export default function PhysicsChapter() {
                     src="/Structure-of-atom.html"
                     className="w-full h-[600px] border-0 rounded-b-lg"
                     title="Structure of Atom Simulation"
-                    style={{ minHeight: '600px' }}
+                    style={{ minHeight: '600px', overflow: 'auto' }}
                   />
                 </CardContent>
               </Card>

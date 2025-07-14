@@ -55,7 +55,7 @@ export function SimulationTab({ chapter }: SimulationTabProps) {
               src={`/${simulationFile}`}
               className="w-full h-[600px] border-0 rounded-b-lg"
               title={`${chapter.chapter} Simulation`}
-              style={{ minHeight: '600px' }}
+              style={{ minHeight: '600px', overflow: 'auto' }}
             />
           </CardContent>
         </Card>
