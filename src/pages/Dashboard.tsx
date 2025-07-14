@@ -9,7 +9,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { Edit } from 'lucide-react';
+import { useRewards } from '@/hooks/useRewards';
+import { UserStatsCard } from '@/components/rewards/UserStatsCard';
+import { BadgeDisplay } from '@/components/rewards/BadgeDisplay';
+import { LeaderboardCard } from '@/components/rewards/LeaderboardCard';
+import { Edit, Award } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface Subject {
@@ -28,6 +32,7 @@ interface UserProgress {
 export default function Dashboard() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const { userScore, userBadges, leaderboard, getPointsForNextLevel } = useRewards();
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [userProgress, setUserProgress] = useState<UserProgress[]>([]);
   const [profile, setProfile] = useState<any>(null);
@@ -303,10 +308,43 @@ export default function Dashboard() {
               </DialogContent>
             </Dialog>
 
+            <Button 
+              onClick={() => navigate('/badges')} 
+              variant="outline" 
+              className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+            >
+              <Award className="w-4 h-4 mr-2" />
+              Badges
+            </Button>
             <Button onClick={handleSignOut} variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
               Sign Out
             </Button>
           </div>
+        </div>
+
+        {/* Rewards Overview */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <div className="bg-white/10 backdrop-blur-xl border-white/20 rounded-lg">
+            <UserStatsCard 
+              userScore={userScore} 
+              pointsForNextLevel={getPointsForNextLevel()} 
+            />
+          </div>
+          <div className="bg-white/10 backdrop-blur-xl border-white/20 rounded-lg">
+            <LeaderboardCard 
+              leaderboard={leaderboard.slice(0, 5)} 
+              currentUserId={user?.id} 
+            />
+          </div>
+        </div>
+
+        {/* Recent Badges */}
+        <div className="mb-8 bg-white/10 backdrop-blur-xl border-white/20 rounded-lg">
+          <BadgeDisplay 
+            userBadges={userBadges} 
+            title="Recent Badges"
+            maxDisplay={4}
+          />
         </div>
 
         {/* Overall Progress */}

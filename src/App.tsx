@@ -17,6 +17,7 @@ import MathematicsChapter from "./pages/MathematicsChapter";
 import Social from "./pages/Social";
 import SocialPart2 from "./pages/SocialPart2";
 import SocialChapter from "./pages/SocialChapter";
+import Badges from "./pages/Badges";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -42,6 +43,7 @@ const App = () => (
           <Route path="/social" element={<Social />} />
           <Route path="/social-part2" element={<SocialPart2 />} />
           <Route path="/social/chapter/:chapterId" element={<SocialChapter />} />
+          <Route path="/badges" element={<Badges />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
