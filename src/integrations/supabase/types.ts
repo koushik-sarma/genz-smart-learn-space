@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      badges: {
+        Row: {
+          category: string
+          color: string
+          created_at: string
+          description: string
+          icon: string
+          id: string
+          name: string
+          points_required: number
+          rarity: string
+        }
+        Insert: {
+          category?: string
+          color?: string
+          created_at?: string
+          description: string
+          icon: string
+          id?: string
+          name: string
+          points_required?: number
+          rarity?: string
+        }
+        Update: {
+          category?: string
+          color?: string
+          created_at?: string
+          description?: string
+          icon?: string
+          id?: string
+          name?: string
+          points_required?: number
+          rarity?: string
+        }
+        Relationships: []
+      }
       dim_biology_chapters_notes: {
         Row: {
           biology_notes_id: number
@@ -443,6 +479,36 @@ export type Database = {
         }
         Relationships: []
       }
+      point_transactions: {
+        Row: {
+          created_at: string
+          id: string
+          points: number
+          reason: string
+          reference_id: string | null
+          reference_type: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          points: number
+          reason: string
+          reference_id?: string | null
+          reference_type?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          points?: number
+          reason?: string
+          reference_id?: string | null
+          reference_type?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           board_of_education: string | null
@@ -482,6 +548,35 @@ export type Database = {
         }
         Relationships: []
       }
+      user_badges: {
+        Row: {
+          badge_id: string
+          earned_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          badge_id: string
+          earned_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          badge_id?: string
+          earned_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_badges_badge_id_fkey"
+            columns: ["badge_id"]
+            isOneToOne: false
+            referencedRelation: "badges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_progress: {
         Row: {
           completed_chapters: number
@@ -504,6 +599,51 @@ export type Database = {
           created_at?: string
           id?: string
           subject_id?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_scores: {
+        Row: {
+          chapters_completed: number
+          created_at: string
+          current_streak: number
+          id: string
+          last_activity_date: string | null
+          level: number
+          longest_streak: number
+          perfect_scores: number
+          quizzes_completed: number
+          total_points: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          chapters_completed?: number
+          created_at?: string
+          current_streak?: number
+          id?: string
+          last_activity_date?: string | null
+          level?: number
+          longest_streak?: number
+          perfect_scores?: number
+          quizzes_completed?: number
+          total_points?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          chapters_completed?: number
+          created_at?: string
+          current_streak?: number
+          id?: string
+          last_activity_date?: string | null
+          level?: number
+          longest_streak?: number
+          perfect_scores?: number
+          quizzes_completed?: number
+          total_points?: number
           updated_at?: string
           user_id?: string
         }
