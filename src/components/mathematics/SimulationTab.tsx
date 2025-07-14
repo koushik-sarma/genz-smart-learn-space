@@ -36,7 +36,9 @@ export function SimulationTab({ chapter }: SimulationTabProps) {
     return simulations[chapterName] || null;
   };
 
+  console.log('Mathematics Chapter:', chapter.chapter);
   const simulationFile = getSimulationFile(chapter.chapter);
+  console.log('Simulation file for', chapter.chapter, ':', simulationFile);
 
   return (
     <div className="space-y-6">
