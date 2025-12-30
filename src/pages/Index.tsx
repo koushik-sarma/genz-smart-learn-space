@@ -7,8 +7,19 @@ import { ProfileForm } from "@/components/ProfileForm";
 import { UserMenu } from "@/components/UserMenu";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+
 const Index = () => {
+  const location = useLocation();
+  
+  // Handle OAuth callback - check if we have a hash fragment with access token
+  useEffect(() => {
+    const hashParams = new URLSearchParams(location.hash.substring(1));
+    if (hashParams.get('access_token')) {
+      // Clear the hash from URL after Supabase processes it
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+  }, [location.hash]);
   const {
     user,
     loading,
