@@ -1,35 +1,42 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BookOpen, BookUser, LayoutDashboard, ListCheck, MessageCircle, User, Calendar, FileText, Search } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  BookOpen,
+  BookUser,
+  LayoutDashboard,
+  ListCheck,
+  MessageCircle,
+  User,
+  Calendar,
+  FileText,
+  Search,
+} from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { ProfileForm } from "@/components/ProfileForm";
 import { UserMenu } from "@/components/UserMenu";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
-  const location = useLocation();
-  
-  // Handle OAuth callback - check if we have a hash fragment with access token
-  useEffect(() => {
-    const hashParams = new URLSearchParams(location.hash.substring(1));
-    if (hashParams.get('access_token')) {
-      // Clear the hash from URL after Supabase processes it
-      window.history.replaceState(null, '', window.location.pathname);
-    }
-  }, [location.hash]);
   const {
     user,
     loading,
     signInWithGoogle,
-    signOut
+    signOut,
   } = useAuth();
   const [showProfileForm, setShowProfileForm] = useState(false);
   const [hasProfile, setHasProfile] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+
   useEffect(() => {
     if (user) {
       checkUserProfile();
