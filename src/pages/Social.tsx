@@ -16,51 +16,56 @@ export default function Social() {
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
+  const DEFAULT_BOARD = 'Telangana State Board';
+  const DEFAULT_CLASS = 10;
+
   useEffect(() => {
-    if (user) {
-      fetchSocialData();
-    }
+    fetchSocialData();
   }, [user]);
 
   const fetchSocialData = async () => {
-    if (!user) return;
-
     try {
-      // First fetch user profile to get class and board
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
+      let boardName = DEFAULT_BOARD;
+      let classNum = DEFAULT_CLASS;
 
-      if (profileError) throw profileError;
-      setProfile(profileData);
+      if (user) {
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
 
-      // Get the board_id based on board name
+        if (!profileError && profileData) {
+          setProfile(profileData);
+          boardName = profileData.board_of_education || DEFAULT_BOARD;
+          classNum = parseInt(profileData.class) || DEFAULT_CLASS;
+        }
+      } else {
+        setProfile({ class: DEFAULT_CLASS, board_of_education: DEFAULT_BOARD });
+      }
+
       const { data: boardData, error: boardError } = await supabase
         .from('dim_boards')
         .select('board_id')
-        .eq('board_name', profileData.board_of_education)
+        .eq('board_name', boardName)
         .single();
 
       if (boardError) throw boardError;
 
-      // Get the subject_id for Social Studies
       const { data: subjectData, error: subjectError } = await supabase
         .from('dim_subjects')
         .select('subject_id')
         .eq('subject_name', 'Social Studies - Part 1')
-        .eq('class', parseInt(profileData.class))
-        .eq('board_name', profileData.board_of_education)
+        .eq('class', classNum)
+        .eq('board_name', boardName)
         .single();
 
       if (subjectError) throw subjectError;
 
-      // Fetch social science chapters based on user's class, board, and subject (part = 1)
       const { data: chaptersData, error: chaptersError } = await supabase
         .from('dim_social_subject')
         .select('*')
-        .eq('class', parseInt(profileData.class))
+        .eq('class', classNum)
         .eq('board_id', boardData.board_id)
         .eq('subject_id', subjectData.subject_id)
         .eq('part', '1')
