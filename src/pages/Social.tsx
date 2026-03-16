@@ -29,41 +29,43 @@ export default function Social() {
       let classNum = DEFAULT_CLASS;
 
       if (user) {
-      // First fetch user profile to get class and board
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
 
-      if (profileError) throw profileError;
-      setProfile(profileData);
+        if (!profileError && profileData) {
+          setProfile(profileData);
+          boardName = profileData.board_of_education || DEFAULT_BOARD;
+          classNum = parseInt(profileData.class) || DEFAULT_CLASS;
+        }
+      } else {
+        setProfile({ class: DEFAULT_CLASS, board_of_education: DEFAULT_BOARD });
+      }
 
-      // Get the board_id based on board name
       const { data: boardData, error: boardError } = await supabase
         .from('dim_boards')
         .select('board_id')
-        .eq('board_name', profileData.board_of_education)
+        .eq('board_name', boardName)
         .single();
 
       if (boardError) throw boardError;
 
-      // Get the subject_id for Social Studies
       const { data: subjectData, error: subjectError } = await supabase
         .from('dim_subjects')
         .select('subject_id')
         .eq('subject_name', 'Social Studies - Part 1')
-        .eq('class', parseInt(profileData.class))
-        .eq('board_name', profileData.board_of_education)
+        .eq('class', classNum)
+        .eq('board_name', boardName)
         .single();
 
       if (subjectError) throw subjectError;
 
-      // Fetch social science chapters based on user's class, board, and subject (part = 1)
       const { data: chaptersData, error: chaptersError } = await supabase
         .from('dim_social_subject')
         .select('*')
-        .eq('class', parseInt(profileData.class))
+        .eq('class', classNum)
         .eq('board_id', boardData.board_id)
         .eq('subject_id', subjectData.subject_id)
         .eq('part', '1')
