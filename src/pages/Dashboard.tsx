@@ -346,83 +346,35 @@ export default function Dashboard() {
 
         {/* Recent Badges - hidden until auth is fully set up */}
 
-        {/* Overall Progress */}
-        <Card className="mb-8 bg-white/10 backdrop-blur-xl border-white/20">
-          <CardHeader>
-            <CardTitle className="text-white">Your Learning Progress</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-white">{subjects.length}</div>
-                <div className="text-gray-300">Total Subjects</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-white">
-                  {userProgress.reduce((acc, p) => acc + p.completed_chapters, 0)}
-                </div>
-                <div className="text-gray-300">Chapters Completed</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-white">
-                  {Math.round(subjects.reduce((acc, s) => acc + getProgressPercentage(s.subject_id, s.total_chapters), 0) / subjects.length) || 0}%
-                </div>
-                <div className="text-gray-300">Average Progress</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Overall Progress - hidden until auth is fully set up */}
 
         {/* Subjects Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {subjects.map((subject) => {
-            const progressPercentage = getProgressPercentage(subject.subject_id, subject.total_chapters);
-            const completedChapters = getCompletedChapters(subject.subject_id);
-            
-            return (
-              <Card key={subject.subject_id} className="bg-white/10 backdrop-blur-xl border-white/20 hover:bg-white/15 transition-all cursor-pointer">
+          {subjects.map((subject) => (
+              <Card key={subject.subject_id} className="bg-white/10 backdrop-blur-xl border-white/20 hover:bg-white/15 transition-all cursor-pointer"
+                onClick={() => {
+                  if (subject.subject_name === 'Physics') navigate('/physics');
+                  else if (subject.subject_name === 'Chemistry') navigate('/chemistry');
+                  else if (subject.subject_name === 'Biology') navigate('/biology');
+                  else if (subject.subject_name === 'Mathematics') navigate('/mathematics');
+                  else if (subject.subject_name === 'Social Studies - Part 1') navigate('/social');
+                  else if (subject.subject_name === 'Social Studies - Part 2') navigate('/social-part2');
+                }}
+              >
                 <CardHeader>
                   <CardTitle className="text-white text-lg">{subject.subject_name}</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex justify-between text-sm text-gray-300">
-                    <span>Progress</span>
-                    <span>{completedChapters} / {subject.total_chapters} chapters</span>
-                  </div>
-                  
-                  <Progress 
-                    value={progressPercentage} 
-                    className="h-3 bg-white/20"
-                  />
-                  
-                  <div className="flex justify-between items-center">
-                    <span className="text-2xl font-bold text-white">{progressPercentage}%</span>
-                    <Button 
-                      size="sm" 
-                      className="bg-gradient-primary hover:shadow-glow transition-all duration-300"
-                      onClick={() => {
-                        if (subject.subject_name === 'Physics') {
-                          navigate('/physics');
-                        } else if (subject.subject_name === 'Chemistry') {
-                          navigate('/chemistry');
-                        } else if (subject.subject_name === 'Biology') {
-                          navigate('/biology');
-                        } else if (subject.subject_name === 'Mathematics') {
-                          navigate('/mathematics');
-                        } else if (subject.subject_name === 'Social Studies - Part 1') {
-                          navigate('/social');
-                        } else if (subject.subject_name === 'Social Studies - Part 2') {
-                          navigate('/social-part2');
-                        }
-                      }}
-                    >
-                      {progressPercentage === 0 ? 'Start Learning' : 'Continue'}
-                    </Button>
-                  </div>
+                <CardContent className="flex justify-between items-center">
+                  <span className="text-gray-300">{subject.total_chapters} Chapters</span>
+                  <Button 
+                    size="sm" 
+                    className="bg-gradient-primary hover:shadow-glow transition-all duration-300"
+                  >
+                    Start Learning
+                  </Button>
                 </CardContent>
               </Card>
-            );
-          })}
+          ))}
         </div>
 
         {subjects.length === 0 && (
