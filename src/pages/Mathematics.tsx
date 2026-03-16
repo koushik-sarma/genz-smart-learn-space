@@ -25,16 +25,19 @@ export default function Mathematics() {
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
+  const DEFAULT_BOARD = 'Telangana State Board';
+  const DEFAULT_CLASS = 10;
+
   useEffect(() => {
-    if (user) {
-      fetchMathematicsData();
-    }
+    fetchMathematicsData();
   }, [user]);
 
   const fetchMathematicsData = async () => {
-    if (!user) return;
-
     try {
+      let boardName = DEFAULT_BOARD;
+      let classNum = DEFAULT_CLASS;
+
+      if (user) {
       // First fetch user profile to get class and board
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
