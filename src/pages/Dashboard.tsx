@@ -344,15 +344,7 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Recent Badges - only for logged in users */}
-        {user && userBadges.length > 0 && (
-          <div className="mb-8">
-            <CompactBadgeDisplay 
-              userBadges={userBadges}
-              maxDisplay={4}
-            />
-          </div>
-        )}
+        {/* Recent Badges - hidden until auth is fully set up */}
 
         {/* Overall Progress */}
         <Card className="mb-8 bg-white/10 backdrop-blur-xl border-white/20">

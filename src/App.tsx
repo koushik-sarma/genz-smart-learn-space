@@ -45,7 +45,7 @@ const App = () => (
           <Route path="/social" element={<Social />} />
           <Route path="/social-part2" element={<SocialPart2 />} />
           <Route path="/social/chapter/:chapterId" element={<SocialChapter />} />
-          <Route path="/badges" element={<Badges />} />
+          {/* <Route path="/badges" element={<Badges />} /> */}{/* Hidden until auth is set up */}
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
