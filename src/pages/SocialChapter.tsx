@@ -23,13 +23,13 @@ export default function SocialChapter() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user && chapterId) {
+    if (chapterId) {
       fetchChapterData();
     }
-  }, [user, chapterId]);
+  }, [chapterId]);
 
   const fetchChapterData = async () => {
-    if (!user || !chapterId) return;
+    if (!chapterId) return;
 
     try {
       // First fetch chapter info
