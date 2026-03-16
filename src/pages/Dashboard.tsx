@@ -320,14 +320,7 @@ export default function Dashboard() {
               </Dialog>
             )}
 
-            <Button 
-              onClick={() => navigate('/badges')} 
-              variant="outline" 
-              className="bg-white/10 border-white/20 text-white hover:bg-white/20"
-            >
-              <Award className="w-4 h-4 mr-2" />
-              Badges
-            </Button>
+            {/* Badges button hidden until auth is fully set up */}
 
             {user ? (
               <Button onClick={handleSignOut} variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
@@ -351,15 +344,7 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Recent Badges - only for logged in users */}
-        {user && userBadges.length > 0 && (
-          <div className="mb-8">
-            <CompactBadgeDisplay 
-              userBadges={userBadges}
-              maxDisplay={4}
-            />
-          </div>
-        )}
+        {/* Recent Badges - hidden until auth is fully set up */}
 
         {/* Overall Progress */}
         <Card className="mb-8 bg-white/10 backdrop-blur-xl border-white/20">
