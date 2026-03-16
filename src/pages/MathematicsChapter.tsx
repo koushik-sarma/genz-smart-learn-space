@@ -26,13 +26,13 @@ export default function MathematicsChapterPage() {
   const [activeTab, setActiveTab] = useState('summary');
 
   useEffect(() => {
-    if (user && chapterId) {
+    if (chapterId) {
       fetchChapterData();
     }
-  }, [user, chapterId]);
+  }, [chapterId]);
 
   const fetchChapterData = async () => {
-    if (!user || !chapterId) return;
+    if (!chapterId) return;
 
     try {
       // Fetch chapter information
