@@ -346,32 +346,7 @@ export default function Dashboard() {
 
         {/* Recent Badges - hidden until auth is fully set up */}
 
-        {/* Overall Progress */}
-        <Card className="mb-8 bg-white/10 backdrop-blur-xl border-white/20">
-          <CardHeader>
-            <CardTitle className="text-white">Your Learning Progress</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-white">{subjects.length}</div>
-                <div className="text-gray-300">Total Subjects</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-white">
-                  {userProgress.reduce((acc, p) => acc + p.completed_chapters, 0)}
-                </div>
-                <div className="text-gray-300">Chapters Completed</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-white">
-                  {Math.round(subjects.reduce((acc, s) => acc + getProgressPercentage(s.subject_id, s.total_chapters), 0) / subjects.length) || 0}%
-                </div>
-                <div className="text-gray-300">Average Progress</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Overall Progress - hidden until auth is fully set up */}
 
         {/* Subjects Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
