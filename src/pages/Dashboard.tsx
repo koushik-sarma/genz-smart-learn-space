@@ -28,6 +28,9 @@ interface UserProgress {
   completed_chapters: number;
 }
 
+const DEFAULT_BOARD = 'Telangana State Board';
+const DEFAULT_CLASS = 10;
+
 export default function Dashboard() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
@@ -48,43 +51,45 @@ export default function Dashboard() {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (user) {
-      fetchDashboardData();
-    }
+    fetchDashboardData();
   }, [user]);
 
   const fetchDashboardData = async () => {
-    if (!user) return;
-
     try {
-      // Fetch user profile
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
+      let boardName = DEFAULT_BOARD;
+      let classNum = DEFAULT_CLASS;
 
-      if (profileError) throw profileError;
-      setProfile(profileData);
+      if (user) {
+        // Fetch user profile
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .maybeSingle();
 
-      // Fetch subjects based on user's class and board
+        if (profileData) {
+          setProfile(profileData);
+          boardName = profileData.board_of_education || DEFAULT_BOARD;
+          classNum = parseInt(profileData.class) || DEFAULT_CLASS;
+        }
+
+        // Fetch user progress
+        const { data: progressData } = await supabase
+          .from('user_progress')
+          .select('*')
+          .eq('user_id', user.id);
+        setUserProgress(progressData || []);
+      }
+
+      // Fetch subjects based on class and board
       const { data: subjectsData, error: subjectsError } = await supabase
         .from('dim_subjects')
         .select('*')
-        .eq('class', parseInt(profileData.class))
-        .eq('board_name', profileData.board_of_education);
+        .eq('class', classNum)
+        .eq('board_name', boardName);
 
       if (subjectsError) throw subjectsError;
       setSubjects(subjectsData || []);
-
-      // Fetch user progress
-      const { data: progressData, error: progressError } = await supabase
-        .from('user_progress')
-        .select('*')
-        .eq('user_id', user.id);
-
-      if (progressError) throw progressError;
-      setUserProgress(progressData || []);
 
     } catch (error: any) {
       toast({
@@ -116,6 +121,8 @@ export default function Dashboard() {
         description: error.message,
         variant: "destructive"
       });
+    } else {
+      navigate('/');
     }
   };
 
@@ -158,7 +165,7 @@ export default function Dashboard() {
       });
 
       setIsEditDialogOpen(false);
-      fetchDashboardData(); // Refresh the data
+      fetchDashboardData();
     } catch (error: any) {
       toast({
         title: "Error updating profile",
@@ -176,6 +183,10 @@ export default function Dashboard() {
     );
   }
 
+  const displayName = profile?.first_name || 'Learner';
+  const displayClass = profile?.class || `${DEFAULT_CLASS}th`;
+  const displayBoard = profile?.board_of_education || DEFAULT_BOARD;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
       <div className="absolute inset-0 bg-gradient-hero opacity-40 animate-gradient bg-[length:400%_400%]"></div>
@@ -184,128 +195,130 @@ export default function Dashboard() {
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div className="text-white">
-            <h1 className="text-3xl font-bold">Welcome back, {profile?.first_name}!</h1>
-            <p className="text-gray-300 mt-2">Class {profile?.class} • {profile?.board_of_education}</p>
+            <h1 className="text-3xl font-bold">Welcome, {displayName}!</h1>
+            <p className="text-gray-300 mt-2">Class {displayClass} • {displayBoard}</p>
           </div>
           <div className="flex gap-2">
-            <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-              <DialogTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  className="bg-white/10 border-white/20 text-white hover:bg-white/20"
-                  onClick={handleEditProfile}
-                >
-                  <Edit className="w-4 h-4 mr-2" />
-                  Edit Profile
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="bg-white/10 backdrop-blur-xl border-white/20 text-white">
-                <DialogHeader>
-                  <DialogTitle className="text-white">Edit Profile</DialogTitle>
-                </DialogHeader>
-                
-                <form onSubmit={handleUpdateProfile} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="firstName" className="text-white">First Name</Label>
-                      <Input
-                        id="firstName"
-                        type="text"
-                        value={editFormData.firstName}
-                        onChange={(e) => setEditFormData({ ...editFormData, firstName: e.target.value })}
-                        required
-                        className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="lastName" className="text-white">Last Name</Label>
-                      <Input
-                        id="lastName"
-                        type="text"
-                        value={editFormData.lastName}
-                        onChange={(e) => setEditFormData({ ...editFormData, lastName: e.target.value })}
-                        required
-                        className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="board" className="text-white">Board of Education</Label>
-                    <Select value={editFormData.boardOfEducation} onValueChange={(value) => setEditFormData({ ...editFormData, boardOfEducation: value })}>
-                      <SelectTrigger className="bg-white/10 border-white/20 text-white">
-                        <SelectValue placeholder="Select board" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-white border-gray-200 text-gray-900">
-                        <SelectItem value="Telangana State Board">Telangana State Board</SelectItem>
-                        <SelectItem value="CBSE">CBSE</SelectItem>
-                        <SelectItem value="ICSE">ICSE</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="class" className="text-white">Class</Label>
-                    <Select value={editFormData.class} onValueChange={(value) => setEditFormData({ ...editFormData, class: value })}>
-                      <SelectTrigger className="bg-white/10 border-white/20 text-white">
-                        <SelectValue placeholder="Select class" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-white border-gray-200 text-gray-900">
-                        <SelectItem value="6th">6th</SelectItem>
-                        <SelectItem value="7th">7th</SelectItem>
-                        <SelectItem value="8th">8th</SelectItem>
-                        <SelectItem value="9th">9th</SelectItem>
-                        <SelectItem value="10th">10th</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="city" className="text-white">City</Label>
-                      <Input
-                        id="city"
-                        type="text"
-                        value={editFormData.city}
-                        onChange={(e) => setEditFormData({ ...editFormData, city: e.target.value })}
-                        required
-                        className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
-                      />
+            {user && profile && (
+              <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                    onClick={handleEditProfile}
+                  >
+                    <Edit className="w-4 h-4 mr-2" />
+                    Edit Profile
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="bg-white/10 backdrop-blur-xl border-white/20 text-white">
+                  <DialogHeader>
+                    <DialogTitle className="text-white">Edit Profile</DialogTitle>
+                  </DialogHeader>
+                  
+                  <form onSubmit={handleUpdateProfile} className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="firstName" className="text-white">First Name</Label>
+                        <Input
+                          id="firstName"
+                          type="text"
+                          value={editFormData.firstName}
+                          onChange={(e) => setEditFormData({ ...editFormData, firstName: e.target.value })}
+                          required
+                          className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="lastName" className="text-white">Last Name</Label>
+                        <Input
+                          id="lastName"
+                          type="text"
+                          value={editFormData.lastName}
+                          onChange={(e) => setEditFormData({ ...editFormData, lastName: e.target.value })}
+                          required
+                          className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                        />
+                      </div>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="state" className="text-white">State</Label>
-                      <Input
-                        id="state"
-                        type="text"
-                        value={editFormData.state}
-                        onChange={(e) => setEditFormData({ ...editFormData, state: e.target.value })}
-                        required
-                        className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
-                      />
+                      <Label htmlFor="board" className="text-white">Board of Education</Label>
+                      <Select value={editFormData.boardOfEducation} onValueChange={(value) => setEditFormData({ ...editFormData, boardOfEducation: value })}>
+                        <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                          <SelectValue placeholder="Select board" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white border-gray-200 text-gray-900">
+                          <SelectItem value="Telangana State Board">Telangana State Board</SelectItem>
+                          <SelectItem value="CBSE">CBSE</SelectItem>
+                          <SelectItem value="ICSE">ICSE</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
-                  </div>
 
-                  <div className="flex gap-2 pt-4">
-                    <Button 
-                      type="submit" 
-                      className="bg-gradient-primary hover:shadow-glow transition-all duration-300"
-                    >
-                      Save Changes
-                    </Button>
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      onClick={() => setIsEditDialogOpen(false)}
-                      className="bg-white/10 border-white/20 text-white hover:bg-white/20"
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </form>
-              </DialogContent>
-            </Dialog>
+                    <div className="space-y-2">
+                      <Label htmlFor="class" className="text-white">Class</Label>
+                      <Select value={editFormData.class} onValueChange={(value) => setEditFormData({ ...editFormData, class: value })}>
+                        <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                          <SelectValue placeholder="Select class" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white border-gray-200 text-gray-900">
+                          <SelectItem value="6th">6th</SelectItem>
+                          <SelectItem value="7th">7th</SelectItem>
+                          <SelectItem value="8th">8th</SelectItem>
+                          <SelectItem value="9th">9th</SelectItem>
+                          <SelectItem value="10th">10th</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="city" className="text-white">City</Label>
+                        <Input
+                          id="city"
+                          type="text"
+                          value={editFormData.city}
+                          onChange={(e) => setEditFormData({ ...editFormData, city: e.target.value })}
+                          required
+                          className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="state" className="text-white">State</Label>
+                        <Input
+                          id="state"
+                          type="text"
+                          value={editFormData.state}
+                          onChange={(e) => setEditFormData({ ...editFormData, state: e.target.value })}
+                          required
+                          className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2 pt-4">
+                      <Button 
+                        type="submit" 
+                        className="bg-gradient-primary hover:shadow-glow transition-all duration-300"
+                      >
+                        Save Changes
+                      </Button>
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        onClick={() => setIsEditDialogOpen(false)}
+                        className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            )}
 
             <Button 
               onClick={() => navigate('/badges')} 
@@ -315,27 +328,38 @@ export default function Dashboard() {
               <Award className="w-4 h-4 mr-2" />
               Badges
             </Button>
-            <Button onClick={handleSignOut} variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
-              Sign Out
-            </Button>
+
+            {user ? (
+              <Button onClick={handleSignOut} variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
+                Sign Out
+              </Button>
+            ) : (
+              <Button onClick={() => navigate('/login')} variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
+                Login
+              </Button>
+            )}
           </div>
         </div>
 
-        {/* Rewards Overview */}
-        <div className="mb-8">
-          <UserStatsCard 
-            userScore={userScore} 
-            userRank={leaderboard.findIndex(entry => entry.user_id === user?.id) + 1 || undefined}
-          />
-        </div>
+        {/* Rewards Overview - only for logged in users */}
+        {user && (
+          <div className="mb-8">
+            <UserStatsCard 
+              userScore={userScore} 
+              userRank={leaderboard.findIndex(entry => entry.user_id === user?.id) + 1 || undefined}
+            />
+          </div>
+        )}
 
-        {/* Recent Badges */}
-        <div className="mb-8">
-          <CompactBadgeDisplay 
-            userBadges={userBadges}
-            maxDisplay={4}
-          />
-        </div>
+        {/* Recent Badges - only for logged in users */}
+        {user && userBadges.length > 0 && (
+          <div className="mb-8">
+            <CompactBadgeDisplay 
+              userBadges={userBadges}
+              maxDisplay={4}
+            />
+          </div>
+        )}
 
         {/* Overall Progress */}
         <Card className="mb-8 bg-white/10 backdrop-blur-xl border-white/20">
